@@ -12,10 +12,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/backend/messengers"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/backend/messengers"
+	"github.com/dimonomid/montray/logs"
 	"github.com/gorilla/websocket"
 )
 
@@ -51,10 +51,10 @@ func TestWSTransmitFailureUnsubscribesConnection(t *testing.T) {
 	}
 	webserver := &Webserver{
 		params:  Params{Common: messengers.Params{Logger: testLoggerInternal, ItemsBoard: itemsboard.New()}},
-		subs:    make(map[int]chan *salmon.Notification),
+		subs:    make(map[int]chan *montray.Notification),
 		wsConns: make(map[int]*wsConn),
 	}
-	var notifications chan *salmon.Notification
+	var notifications chan *montray.Notification
 	connection.subID, notifications, _ = webserver.subscribe(connection)
 
 	// Resetting the client TCP connection makes the server's write side fail
@@ -73,7 +73,7 @@ func TestWSTransmitFailureUnsubscribesConnection(t *testing.T) {
 	// Queue several writes so the test does not depend on the first write being
 	// the one that observes the peer's TCP reset.
 	for i := 0; i < cap(notifications); i++ {
-		notifications <- &salmon.Notification{}
+		notifications <- &montray.Notification{}
 	}
 	go webserver.wsTxLoop(connection, notifications)
 
@@ -97,7 +97,7 @@ func TestWebsocketSubscriptionQueueSize(t *testing.T) {
 	connection := &wsConn{ctx: ctx, ctxCancel: cancel}
 	webserver := &Webserver{
 		params:  Params{Common: messengers.Params{Logger: testLoggerInternal}},
-		subs:    make(map[int]chan *salmon.Notification),
+		subs:    make(map[int]chan *montray.Notification),
 		wsConns: make(map[int]*wsConn),
 	}
 
@@ -120,7 +120,7 @@ func TestWebsocketClientLifecycleIsLoggedAtInfo(t *testing.T) {
 	connection := &wsConn{ctx: ctx, ctxCancel: cancel}
 	webserver := &Webserver{
 		params:  Params{Common: messengers.Params{Logger: logger}},
-		subs:    make(map[int]chan *salmon.Notification),
+		subs:    make(map[int]chan *montray.Notification),
 		wsConns: make(map[int]*wsConn),
 	}
 
@@ -145,14 +145,14 @@ func TestWebsocketClientLifecycleIsLoggedAtInfo(t *testing.T) {
 }
 
 func TestRunDisconnectsSubscriberWhoseQueueIsFull(t *testing.T) {
-	incoming := make(chan *salmon.Notification, 1)
+	incoming := make(chan *montray.Notification, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	connection := &wsConn{ctx: ctx, ctxCancel: cancel}
 	webserver := &Webserver{
 		params:  Params{Common: messengers.Params{Logger: testLoggerInternal, NotificationsChan: incoming}},
 		server:  &http.Server{},
-		subs:    make(map[int]chan *salmon.Notification),
+		subs:    make(map[int]chan *montray.Notification),
 		wsConns: make(map[int]*wsConn),
 	}
 	id, notifications, ok := webserver.subscribe(connection)
@@ -160,14 +160,14 @@ func TestRunDisconnectsSubscriberWhoseQueueIsFull(t *testing.T) {
 		t.Fatal("subscription was rejected")
 	}
 	for i := 0; i < cap(notifications); i++ {
-		notifications <- &salmon.Notification{}
+		notifications <- &montray.Notification{}
 	}
 	runDone := make(chan struct{})
 	go func() {
 		webserver.run()
 		close(runDone)
 	}()
-	incoming <- &salmon.Notification{}
+	incoming <- &montray.Notification{}
 
 	select {
 	case <-connection.ctx.Done():

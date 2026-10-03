@@ -10,65 +10,65 @@ GOEXE := .exe
 endif
 
 LDFLAGS := -s -w \
-	-X 'github.com/dimonomid/salmon/version.version=$(patsubst v%,%,$(VERSION))' \
-	-X 'github.com/dimonomid/salmon/version.commit=$(COMMIT)' \
-	-X 'github.com/dimonomid/salmon/version.date=$(DATE)' \
-	-X 'github.com/dimonomid/salmon/version.builtBy=make'
+	-X 'github.com/dimonomid/montray/version.version=$(patsubst v%,%,$(VERSION))' \
+	-X 'github.com/dimonomid/montray/version.commit=$(COMMIT)' \
+	-X 'github.com/dimonomid/montray/version.date=$(DATE)' \
+	-X 'github.com/dimonomid/montray/version.builtBy=make'
 
 .PHONY: all
-all: clean salmon salmon-watch
+all: clean montray-server montray-ui
 
 .PHONY: test
 test:
 	go test --count 1 --race ./...
-	node --test cmd/salmon-watch-legacy/jstest/*.js
-	cargo test --manifest-path cmd/salmon-watch/Cargo.toml
+	node --test cmd/montray-ui-legacy/jstest/*.js
+	cargo test --manifest-path cmd/montray-ui/Cargo.toml
 
 .PHONY: generate
 generate:
 	go generate ./...
 
-.PHONY: salmon
-salmon: generate
-	@echo Building bin/salmon$(GOEXE)
+.PHONY: montray-server
+montray-server: generate
+	@echo Building bin/montray-server$(GOEXE)
 	@# Keep the server portable across Linux distributions instead of linking it
 	@# to the glibc version provided by the build host.
 	@CGO_ENABLED=0 go build \
 		-trimpath \
-		-o bin/salmon$(GOEXE) \
+		-o bin/montray-server$(GOEXE) \
 		-ldflags "$(LDFLAGS)" \
-		./cmd/salmon
+		./cmd/montray-server
 
-.PHONY: salmon-watch-legacy
-salmon-watch-legacy: generate
-	@echo Building bin/salmon-watch-legacy$(GOEXE)
+.PHONY: montray-ui-legacy
+montray-ui-legacy: generate
+	@echo Building bin/montray-ui-legacy$(GOEXE)
 	@go build \
 		-trimpath \
-		-o bin/salmon-watch-legacy$(GOEXE) \
+		-o bin/montray-ui-legacy$(GOEXE) \
 		-ldflags "$(LDFLAGS)" \
-		./cmd/salmon-watch-legacy
+		./cmd/montray-ui-legacy
 
-.PHONY: salmon-watch
-salmon-watch:
-	@echo Building bin/salmon-watch$(GOEXE)
-	@SALMON_WATCH_BUILD_VERSION='$(patsubst v%,%,$(VERSION))' \
-		SALMON_WATCH_BUILD_COMMIT='$(COMMIT)' \
-		SALMON_WATCH_BUILD_DATE='$(DATE)' \
-		SALMON_WATCH_BUILT_BY='make' \
-		cargo build --release --manifest-path cmd/salmon-watch/Cargo.toml
+.PHONY: montray-ui
+montray-ui:
+	@echo Building bin/montray-ui$(GOEXE)
+	@MONTRAY_BUILD_VERSION='$(patsubst v%,%,$(VERSION))' \
+		MONTRAY_BUILD_COMMIT='$(COMMIT)' \
+		MONTRAY_BUILD_DATE='$(DATE)' \
+		MONTRAY_BUILT_BY='make' \
+		cargo build --release --manifest-path cmd/montray-ui/Cargo.toml
 	@mkdir -p bin
-	@cp cmd/salmon-watch/target/release/salmon-watch$(GOEXE) bin/salmon-watch$(GOEXE)
+	@cp cmd/montray-ui/target/release/montray-ui$(GOEXE) bin/montray-ui$(GOEXE)
 
-.PHONY: salmon-watch-debug
-salmon-watch-debug:
-	@echo Building bin/salmon-watch-debug$(GOEXE)
-	@SALMON_WATCH_BUILD_VERSION='$(patsubst v%,%,$(VERSION))' \
-		SALMON_WATCH_BUILD_COMMIT='$(COMMIT)' \
-		SALMON_WATCH_BUILD_DATE='$(DATE)' \
-		SALMON_WATCH_BUILT_BY='make' \
-		cargo build --manifest-path cmd/salmon-watch/Cargo.toml
+.PHONY: montray-ui-debug
+montray-ui-debug:
+	@echo Building bin/montray-ui-debug$(GOEXE)
+	@MONTRAY_BUILD_VERSION='$(patsubst v%,%,$(VERSION))' \
+		MONTRAY_BUILD_COMMIT='$(COMMIT)' \
+		MONTRAY_BUILD_DATE='$(DATE)' \
+		MONTRAY_BUILT_BY='make' \
+		cargo build --manifest-path cmd/montray-ui/Cargo.toml
 	@mkdir -p bin
-	@cp cmd/salmon-watch/target/debug/salmon-watch$(GOEXE) bin/salmon-watch-debug$(GOEXE)
+	@cp cmd/montray-ui/target/debug/montray-ui$(GOEXE) bin/montray-ui-debug$(GOEXE)
 
 .PHONY: clean
 clean:
@@ -81,16 +81,16 @@ INSTALL := install
 INSTALL_FLAGS := -m 755
 
 .PHONY: install
-install: install-salmon install-salmon-watch
+install: install-montray-server install-montray-ui
 
-.PHONY: install-salmon
-install-salmon:
-	$(INSTALL) $(INSTALL_FLAGS) -D bin/salmon$(GOEXE) $(BINDIR)/salmon$(GOEXE)
+.PHONY: install-montray-server
+install-montray-server:
+	$(INSTALL) $(INSTALL_FLAGS) -D bin/montray-server$(GOEXE) $(BINDIR)/montray-server$(GOEXE)
 
-.PHONY: install-salmon-watch
-install-salmon-watch:
-	$(INSTALL) $(INSTALL_FLAGS) -D bin/salmon-watch$(GOEXE) $(BINDIR)/salmon-watch$(GOEXE)
+.PHONY: install-montray-ui
+install-montray-ui:
+	$(INSTALL) $(INSTALL_FLAGS) -D bin/montray-ui$(GOEXE) $(BINDIR)/montray-ui$(GOEXE)
 
-.PHONY: install-salmon-watch-legacy
-install-salmon-watch-legacy:
-	$(INSTALL) $(INSTALL_FLAGS) -D bin/salmon-watch-legacy$(GOEXE) $(BINDIR)/salmon-watch-legacy$(GOEXE)
+.PHONY: install-montray-ui-legacy
+install-montray-ui-legacy:
+	$(INSTALL) $(INSTALL_FLAGS) -D bin/montray-ui-legacy$(GOEXE) $(BINDIR)/montray-ui-legacy$(GOEXE)

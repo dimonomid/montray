@@ -18,7 +18,7 @@ func TestSystemdUnitArgument(t *testing.T) {
 }
 
 func TestInstallSystemdServiceWritesUnitAndEnablesIt(t *testing.T) {
-	unitPath := filepath.Join(t.TempDir(), "systemd", "salmon.service")
+	unitPath := filepath.Join(t.TempDir(), "systemd", "montray.service")
 	if err := os.MkdirAll(filepath.Dir(unitPath), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestInstallSystemdServiceWritesUnitAndEnablesIt(t *testing.T) {
 		return nil
 	}
 
-	created, err := InstallSystemdService(unitPath, "salmon.service", "[Service]\n", run)
+	created, err := InstallSystemdService(unitPath, "montray.service", "[Service]\n", run)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,19 +42,19 @@ func TestInstallSystemdServiceWritesUnitAndEnablesIt(t *testing.T) {
 	if got, want := string(data), "[Service]\n"; got != want {
 		t.Fatalf("unit contents = %q, want %q", got, want)
 	}
-	wantCalls := [][]string{{"systemctl", "daemon-reload"}, {"systemctl", "enable", "salmon.service"}}
+	wantCalls := [][]string{{"systemctl", "daemon-reload"}, {"systemctl", "enable", "montray.service"}}
 	if !reflect.DeepEqual(calls, wantCalls) {
 		t.Fatalf("systemctl calls = %#v, want %#v", calls, wantCalls)
 	}
 }
 
 func TestInstallSystemdServiceStopsWhenReloadFails(t *testing.T) {
-	unitPath := filepath.Join(t.TempDir(), "systemd", "salmon.service")
+	unitPath := filepath.Join(t.TempDir(), "systemd", "montray.service")
 	if err := os.MkdirAll(filepath.Dir(unitPath), 0755); err != nil {
 		t.Fatal(err)
 	}
 	called := 0
-	_, err := InstallSystemdService(unitPath, "salmon.service", "[Service]\n", func(string, ...string) error {
+	_, err := InstallSystemdService(unitPath, "montray.service", "[Service]\n", func(string, ...string) error {
 		called++
 		return errors.New("no systemd")
 	})
@@ -64,9 +64,9 @@ func TestInstallSystemdServiceStopsWhenReloadFails(t *testing.T) {
 }
 
 func TestInstallSystemdServiceRequiresExistingUnitDirectory(t *testing.T) {
-	unitPath := filepath.Join(t.TempDir(), "missing", "salmon.service")
+	unitPath := filepath.Join(t.TempDir(), "missing", "montray.service")
 	called := false
-	created, err := InstallSystemdService(unitPath, "salmon.service", "[Service]\n", func(string, ...string) error {
+	created, err := InstallSystemdService(unitPath, "montray.service", "[Service]\n", func(string, ...string) error {
 		called = true
 		return nil
 	})
@@ -85,7 +85,7 @@ func TestInstallSystemdServiceRequiresExistingUnitDirectory(t *testing.T) {
 }
 
 func TestInstallSystemdServiceDoesNotOverwriteExistingUnit(t *testing.T) {
-	unitPath := filepath.Join(t.TempDir(), "systemd", "salmon.service")
+	unitPath := filepath.Join(t.TempDir(), "systemd", "montray.service")
 	if err := os.MkdirAll(filepath.Dir(unitPath), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestInstallSystemdServiceDoesNotOverwriteExistingUnit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	created, err := InstallSystemdService(unitPath, "salmon.service", "generated unit\n", func(string, ...string) error { return nil })
+	created, err := InstallSystemdService(unitPath, "montray.service", "generated unit\n", func(string, ...string) error { return nil })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +110,7 @@ func TestInstallSystemdServiceDoesNotOverwriteExistingUnit(t *testing.T) {
 }
 
 func TestReinstallSystemdServiceUpdatesExistingUnit(t *testing.T) {
-	unitPath := filepath.Join(t.TempDir(), "systemd", "salmon.service")
+	unitPath := filepath.Join(t.TempDir(), "systemd", "montray.service")
 	if err := os.MkdirAll(filepath.Dir(unitPath), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func TestReinstallSystemdServiceUpdatesExistingUnit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	created, err := ReinstallSystemdService(unitPath, "salmon.service", "generated unit\n", func(string, ...string) error { return nil })
+	created, err := ReinstallSystemdService(unitPath, "montray.service", "generated unit\n", func(string, ...string) error { return nil })
 	if err != nil {
 		t.Fatal(err)
 	}

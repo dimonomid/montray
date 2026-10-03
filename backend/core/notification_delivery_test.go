@@ -6,8 +6,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
 )
 
 var notificationTestLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})
@@ -17,9 +17,9 @@ type namedMessenger string
 func (m namedMessenger) String() string { return string(m) }
 
 func TestSendMessengerNotificationWaitsForCapacity(t *testing.T) {
-	first := &salmon.Notification{}
-	second := &salmon.Notification{}
-	ch := make(chan *salmon.Notification, 1)
+	first := &montray.Notification{}
+	second := &montray.Notification{}
+	ch := make(chan *montray.Notification, 1)
 	ch <- first
 	shutdown := make(chan struct{})
 	result := make(chan bool, 1)
@@ -44,14 +44,14 @@ func TestSendMessengerNotificationWaitsForCapacity(t *testing.T) {
 }
 
 func TestSendMessengerNotificationUnblocksDuringShutdown(t *testing.T) {
-	ch := make(chan *salmon.Notification, 1)
-	ch <- &salmon.Notification{}
+	ch := make(chan *montray.Notification, 1)
+	ch <- &montray.Notification{}
 	shutdown := make(chan struct{})
 	result := make(chan bool, 1)
 	go func() {
 		result <- sendMessengerNotification(
 			messengerWCtx{messenger: namedMessenger("test"), logger: notificationTestLogger, notificationsChan: ch},
-			&salmon.Notification{},
+			&montray.Notification{},
 			shutdown,
 		)
 	}()
@@ -68,12 +68,12 @@ func TestSendMessengerNotificationUnblocksDuringShutdown(t *testing.T) {
 }
 
 func TestSlowMessengerDoesNotDelayHealthyMessenger(t *testing.T) {
-	slowCh := make(chan *salmon.Notification, 1)
-	slowCh <- &salmon.Notification{}
-	healthyCh := make(chan *salmon.Notification, 1)
+	slowCh := make(chan *montray.Notification, 1)
+	slowCh <- &montray.Notification{}
+	healthyCh := make(chan *montray.Notification, 1)
 	shutdown := make(chan struct{})
 	done := make(chan struct{})
-	notif := &salmon.Notification{}
+	notif := &montray.Notification{}
 	go func() {
 		sendMessengerNotifications([]messengerWCtx{
 			{messenger: namedMessenger("slow"), logger: notificationTestLogger, notificationsChan: slowCh},

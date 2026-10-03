@@ -1,4 +1,4 @@
-package salmon
+package montray
 
 import "time"
 

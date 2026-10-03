@@ -1,4 +1,4 @@
-module github.com/dimonomid/salmon
+module github.com/dimonomid/montray
 
 go 1.26.0
 

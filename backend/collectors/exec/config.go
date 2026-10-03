@@ -3,7 +3,7 @@ package exec
 import (
 	"time"
 
-	"github.com/dimonomid/salmon"
+	"github.com/dimonomid/montray"
 )
 
 type Config struct {
@@ -30,7 +30,7 @@ type Config struct {
 
 	// Conditions contains the conditions to check. When omitted, exit code 0 is
 	// OK and every other exit code is an error. If configured conditions do not
-	// match, a salmon.ItemStateError is assumed. An explicit empty list is invalid.
+	// match, a montray.ItemStateError is assumed. An explicit empty list is invalid.
 	Conditions []ConfigCondition `yaml:"conditions"`
 }
 
@@ -44,5 +44,5 @@ type ConfigCondition struct {
 	ExitCode string `yaml:"exitCode"`
 
 	// Result is the outcome of the condition if it's true.
-	Result salmon.ItemState `yaml:"result"`
+	Result montray.ItemState `yaml:"result"`
 }

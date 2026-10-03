@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/messengers"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/messengers"
+	"github.com/dimonomid/montray/logs"
 )
 
 const timeFmt = "2006-01-02 15:04:05.000"
@@ -73,7 +73,7 @@ func (fl *FileLogger) run() {
 		nt := notif.Time.Format(timeFmt)
 
 		for _, item := range notif.OngoingIncidents.Removed {
-			fmt.Fprintf(fl.f, "%s [ %s ] %s\n", nt, salmon.ItemStateOK, item.Key)
+			fmt.Fprintf(fl.f, "%s [ %s ] %s\n", nt, montray.ItemStateOK, item.Key)
 		}
 
 		for _, item := range notif.OngoingIncidents.Added {

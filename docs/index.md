@@ -1,9 +1,11 @@
-# Salmon documentation
+# Montray documentation
 
-Salmon checks systemd units and arbitrary commands on one or more machines, and shows the resulting incidents in a desktop tray icon and a small web UI.
+Montray Server checks systemd units and arbitrary commands on one or more
+machines, and Montray UI shows the resulting incidents in a desktop tray icon and
+native window.
 
 The [README](../README.md) contains the installation and quick-start instructions. The pages here explain the configuration and behavior in more detail:
 
-- [Configuring Salmon](./salmon_config.md)
-- [Configuring Salmon-Watch](./salmon_watch_config.md)
+- [Configuring Montray Server](./montray_server_config.md)
+- [Configuring Montray UI](./montray_ui_config.md)
 - [Security](./security.md)

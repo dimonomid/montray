@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 jobs:
-  salmon-watch-legacy:
-    name: salmon-watch-legacy E2E (Linux)
+  montray-ui-legacy:
+    name: montray-ui-legacy E2E (Linux)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,48 +31,48 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc libgtk-3-dev libayatana-appindicator3-dev xvfb xauth dbus-x11
 
-      - name: Build binaries and install Salmon Watch Legacy
+      - name: Build binaries and install Montray UI Legacy
         run: |
-          make salmon salmon-watch-legacy
-          if readelf -lW ./bin/salmon | grep '[[:space:]]INTERP[[:space:]]' >/dev/null; then
-            echo "bin/salmon is dynamically linked" >&2
+          make montray-server montray-ui-legacy
+          if readelf -lW ./bin/montray-server | grep '[[:space:]]INTERP[[:space:]]' >/dev/null; then
+            echo "bin/montray-server is dynamically linked" >&2
             exit 1
           fi
-          sudo make install-salmon-watch-legacy
+          sudo make install-montray-ui-legacy
 
-      - name: Set up and start Salmon
+      - name: Set up and start Montray Server
         run: |
-          sudo ./bin/salmon setup
+          sudo ./bin/montray-server setup
 
-          test -x /usr/local/bin/salmon
-          cmp ./bin/salmon /usr/local/bin/salmon
-          grep -Fq 'ExecStart="/usr/local/bin/salmon"' /etc/systemd/system/salmon.service
-          sudo systemctl is-enabled --quiet salmon.service
-          sudo systemctl is-active --quiet salmon.service
+          test -x /usr/local/bin/montray-server
+          cmp ./bin/montray-server /usr/local/bin/montray-server
+          grep -Fq 'ExecStart="/usr/local/bin/montray-server"' /etc/systemd/system/montray-server.service
+          sudo systemctl is-enabled --quiet montray-server.service
+          sudo systemctl is-active --quiet montray-server.service
 
-      - name: Configure Salmon for the E2E incident
+      - name: Configure Montray Server for the E2E incident
         run: |
-          sudo patch --batch --forward /etc/salmon.yml .github/e2e/salmon.yml.patch
-          sudo systemctl restart salmon.service
+          sudo patch --batch --forward /etc/montray-server.yml .github/e2e/montray-server.yml.patch
+          sudo systemctl restart montray-server.service
 
-      - name: Prepare isolated Salmon Watch Legacy home
-        run: mkdir -p "${RUNNER_TEMP}/salmon-watch-home"
+      - name: Prepare isolated Montray UI Legacy home
+        run: mkdir -p "${RUNNER_TEMP}/montray-ui-home"
 
-      - name: Set up Salmon Watch Legacy
+      - name: Set up Montray UI Legacy
         env:
-          HOME: ${{ runner.temp }}/salmon-watch-home
-          XDG_CONFIG_HOME: ${{ runner.temp }}/salmon-watch-home/.config
-          XDG_DATA_HOME: ${{ runner.temp }}/salmon-watch-home/.local/share
-        run: salmon-watch-legacy setup
+          HOME: ${{ runner.temp }}/montray-ui-home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/montray-ui-home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/montray-ui-home/.local/share
+        run: montray-ui-legacy setup
 
       - name: Verify incident reaches the UI WebSocket
         env:
-          HOME: ${{ runner.temp }}/salmon-watch-home
-          XDG_CONFIG_HOME: ${{ runner.temp }}/salmon-watch-home/.config
-          XDG_DATA_HOME: ${{ runner.temp }}/salmon-watch-home/.local/share
+          HOME: ${{ runner.temp }}/montray-ui-home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/montray-ui-home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/montray-ui-home/.local/share
         run: |
-          watch_log="${RUNNER_TEMP}/salmon-watch-legacy.log"
-          setsid dbus-run-session -- xvfb-run -a salmon-watch-legacy >"${watch_log}" 2>&1 &
+          watch_log="${RUNNER_TEMP}/montray-ui-legacy.log"
+          setsid dbus-run-session -- xvfb-run -a montray-ui-legacy >"${watch_log}" 2>&1 &
           watch_pid=$!
           cleanup_watch() {
             kill -- "-${watch_pid}" 2>/dev/null || true
@@ -81,20 +81,20 @@ jobs:
           trap cleanup_watch EXIT
 
           # Exercise the same local WebSocket endpoint used by the browser UI.
-          if ! node .github/e2e/verify-salmon-watch-legacy.mjs; then
-            echo "Salmon Watch Legacy log:"
+          if ! node .github/e2e/verify-montray-ui-legacy.mjs; then
+            echo "Montray UI Legacy log:"
             cat "${watch_log}"
-            echo "Salmon service log:"
-            sudo journalctl --no-pager -u salmon.service
+            echo "Montray Server service log:"
+            sudo journalctl --no-pager -u montray-server.service
             exit 1
           fi
 
-      - name: Stop Salmon
+      - name: Stop Montray Server
         if: always()
-        run: sudo systemctl stop salmon.service || true
+        run: sudo systemctl stop montray-server.service || true
 
-  salmon-watch:
-    name: salmon-watch E2E (Linux)
+  montray-ui:
+    name: montray-ui E2E (Linux)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -127,49 +127,49 @@ jobs:
           )
           sudo apt-get install -y "${packages[@]}"
 
-      - name: Build binaries and install Salmon Watch
+      - name: Build binaries and install Montray UI
         run: |
-          make salmon
-          bash .github/build-salmon-watch-linux.sh
-          if readelf -lW ./bin/salmon | grep '[[:space:]]INTERP[[:space:]]' >/dev/null; then
-            echo "bin/salmon is dynamically linked" >&2
+          make montray-server
+          bash .github/build-montray-ui-linux.sh
+          if readelf -lW ./bin/montray-server | grep '[[:space:]]INTERP[[:space:]]' >/dev/null; then
+            echo "bin/montray-server is dynamically linked" >&2
             exit 1
           fi
-          sudo make install-salmon-watch
+          sudo make install-montray-ui
 
-      - name: Set up and start Salmon
+      - name: Set up and start Montray Server
         run: |
-          sudo ./bin/salmon setup
+          sudo ./bin/montray-server setup
 
-          test -x /usr/local/bin/salmon
-          cmp ./bin/salmon /usr/local/bin/salmon
-          grep -Fq 'ExecStart="/usr/local/bin/salmon"' /etc/systemd/system/salmon.service
-          sudo systemctl is-enabled --quiet salmon.service
-          sudo systemctl is-active --quiet salmon.service
+          test -x /usr/local/bin/montray-server
+          cmp ./bin/montray-server /usr/local/bin/montray-server
+          grep -Fq 'ExecStart="/usr/local/bin/montray-server"' /etc/systemd/system/montray-server.service
+          sudo systemctl is-enabled --quiet montray-server.service
+          sudo systemctl is-active --quiet montray-server.service
 
-      - name: Configure Salmon for the E2E incident
+      - name: Configure Montray Server for the E2E incident
         run: |
-          sudo patch --batch --forward /etc/salmon.yml .github/e2e/salmon.yml.patch
-          sudo systemctl restart salmon.service
+          sudo patch --batch --forward /etc/montray-server.yml .github/e2e/montray-server.yml.patch
+          sudo systemctl restart montray-server.service
 
-      - name: Prepare isolated Salmon Watch home
-        run: mkdir -p "${RUNNER_TEMP}/salmon-watch-home"
+      - name: Prepare isolated Montray UI home
+        run: mkdir -p "${RUNNER_TEMP}/montray-ui-home"
 
-      - name: Set up Salmon Watch
+      - name: Set up Montray UI
         env:
-          HOME: ${{ runner.temp }}/salmon-watch-home
-          XDG_CONFIG_HOME: ${{ runner.temp }}/salmon-watch-home/.config
-          XDG_DATA_HOME: ${{ runner.temp }}/salmon-watch-home/.local/share
-        run: salmon-watch setup
+          HOME: ${{ runner.temp }}/montray-ui-home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/montray-ui-home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/montray-ui-home/.local/share
+        run: montray-ui setup
 
-      - name: Verify incident reaches Salmon Watch
+      - name: Verify incident reaches Montray UI
         env:
-          HOME: ${{ runner.temp }}/salmon-watch-home
-          XDG_CONFIG_HOME: ${{ runner.temp }}/salmon-watch-home/.config
-          XDG_DATA_HOME: ${{ runner.temp }}/salmon-watch-home/.local/share
+          HOME: ${{ runner.temp }}/montray-ui-home
+          XDG_CONFIG_HOME: ${{ runner.temp }}/montray-ui-home/.config
+          XDG_DATA_HOME: ${{ runner.temp }}/montray-ui-home/.local/share
         run: |
-          watch_log="${RUNNER_TEMP}/salmon-watch.log"
-          setsid dbus-run-session -- xvfb-run -a salmon-watch --start-hidden >"${watch_log}" 2>&1 &
+          watch_log="${RUNNER_TEMP}/montray-ui.log"
+          setsid dbus-run-session -- xvfb-run -a montray-ui --start-hidden >"${watch_log}" 2>&1 &
           watch_pid=$!
           cleanup_watch() {
             kill -- "-${watch_pid}" 2>/dev/null || true
@@ -182,7 +182,7 @@ jobs:
               grep -Fq "server local connected" "${watch_log}" &&
               grep -Fq "server local synchronized:" "${watch_log}" &&
               grep -Eq "server local (ongoing|added|updated) incident e2e\.exec_result \(error\): .*expected-e2e-incident" "${watch_log}"; then
-              echo "Salmon Watch received the expected incident:"
+              echo "Montray UI received the expected incident:"
               grep -E "server local (ongoing|added|updated) incident e2e\.exec_result" "${watch_log}"
               exit 0
             fi
@@ -192,13 +192,13 @@ jobs:
             sleep 0.25
           done
 
-          echo "Timed out waiting for the expected Salmon Watch incident"
-          echo "Salmon Watch log:"
+          echo "Timed out waiting for the expected Montray UI incident"
+          echo "Montray UI log:"
           cat "${watch_log}"
-          echo "Salmon service log:"
-          sudo journalctl --no-pager -u salmon.service
+          echo "Montray Server service log:"
+          sudo journalctl --no-pager -u montray-server.service
           exit 1
 
-      - name: Stop Salmon
+      - name: Stop Montray Server
         if: always()
-        run: sudo systemctl stop salmon.service || true
+        run: sudo systemctl stop montray-server.service || true

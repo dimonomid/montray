@@ -8,17 +8,17 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray/logs"
 )
 
 func TestLoggerFormatsNamespaceContextAndLevel(t *testing.T) {
 	clk := clock.NewMock()
 	clk.Set(time.Date(2026, 8, 27, 12, 34, 56, 123000000, time.FixedZone("test", 2*60*60)))
-	path := t.TempDir() + "/salmon.log"
+	path := t.TempDir() + "/montray.log"
 	logger := logs.NewLogger(logs.LoggerParams{
 		Clock: clk,
 		Sinks: []logs.LoggerSinkParams{{Filepath: path, MinLevel: logs.Info}},
-	}).WithNamespaceAppended("Salmon").WithNamespaceAppended("Core").
+	}).WithNamespaceAppended("Montray").WithNamespaceAppended("Core").
 		WithContext("z", "last").WithContext("a", "first")
 
 	logger.Log(logs.Debug, "hidden")
@@ -29,7 +29,7 @@ func TestLoggerFormatsNamespaceContextAndLevel(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := string(data)
-	want := "2026-08-27 10:34:56.123 [I] [Salmon/Core] Monitoring started (a:first, z:last)\n"
+	want := "2026-08-27 10:34:56.123 [I] [Montray/Core] Monitoring started (a:first, z:last)\n"
 	if got != want {
 		t.Fatalf("log = %q, want %q", got, want)
 	}
@@ -60,7 +60,7 @@ func TestParseLogLevel(t *testing.T) {
 
 func TestLoggerFormatsAllLevels(t *testing.T) {
 	clk := clock.NewMock()
-	path := t.TempDir() + "/salmon.log"
+	path := t.TempDir() + "/montray.log"
 	logger := logs.NewLogger(logs.LoggerParams{
 		Clock: clk,
 		Sinks: []logs.LoggerSinkParams{{Filepath: path, MinLevel: logs.Debug}},

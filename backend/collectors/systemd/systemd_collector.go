@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/benbjohnson/clock"
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/collectors"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/collectors"
+	"github.com/dimonomid/montray/logs"
 )
 
 type Collector struct {
@@ -24,7 +24,7 @@ type Collector struct {
 // recovery timer is running. The generation distinguishes the current timer
 // from callbacks belonging to earlier, canceled recovery attempts.
 type pendingResolution struct {
-	item       *salmon.Item
+	item       *montray.Item
 	timer      *clock.Timer
 	generation uint64
 }
@@ -33,7 +33,7 @@ type pendingResolution struct {
 // with the pending resolution before publishing the stored OK item, so a timer
 // callback that races with cancellation cannot resolve a newer incident state.
 type resolutionReady struct {
-	key        salmon.ItemKey
+	key        montray.ItemKey
 	generation uint64
 }
 
@@ -114,11 +114,11 @@ func validateConfig(config Config) error {
 			if condition.SubState != "" && condition.SubStateContains != "" {
 				return fmt.Errorf("rule #%d condition #%d must not specify both subState and subStateContains", ruleIndex, conditionIndex)
 			}
-			if !salmon.IsItemStateValid(condition.Result) {
+			if !montray.IsItemStateValid(condition.Result) {
 				return fmt.Errorf("rule #%d condition #%d has invalid result %q", ruleIndex, conditionIndex, condition.Result)
 			}
 			if condition.Resolve != nil {
-				if condition.Result == salmon.ItemStateOK {
+				if condition.Result == montray.ItemStateOK {
 					return fmt.Errorf("rule #%d condition #%d resolve requires a non-OK result", ruleIndex, conditionIndex)
 				}
 				if condition.Resolve.After <= 0 {
@@ -164,19 +164,19 @@ func (c *Collector) run(providerUpdCh chan *UnitUpdate) {
 	// incidentResolve remembers the policy of the condition that originally
 	// created each active incident. A present nil value means that the incident
 	// has no delayed-resolution policy and should resolve on its next OK update.
-	incidentResolve := make(map[salmon.ItemKey]*ConfigResolve)
+	incidentResolve := make(map[montray.ItemKey]*ConfigResolve)
 	// incidentStates retains the latest non-OK severity for each incident. While
 	// resolution is deferred, updates use this severity with the unit's current
 	// details so consumers see the new systemd state without resolving it.
-	incidentStates := make(map[salmon.ItemKey]salmon.ItemState)
+	incidentStates := make(map[montray.ItemKey]montray.ItemState)
 
 	// pendingResolutions contains incidents currently receiving a qualifying OK
 	// state and waiting for their configured recovery duration to elapse.
-	pendingResolutions := make(map[salmon.ItemKey]*pendingResolution)
+	pendingResolutions := make(map[montray.ItemKey]*pendingResolution)
 
 	// deferredResolutionStates tracks the last state reported while resolution
 	// was delayed, so each actual state or substate transition is logged once.
-	deferredResolutionStates := make(map[salmon.ItemKey]deferredResolutionUnitState)
+	deferredResolutionStates := make(map[montray.ItemKey]deferredResolutionUnitState)
 
 	// Timer callbacks send only an identity through resolutionReadyCh. The run
 	// goroutine remains the sole owner of the maps and verifies the generation
@@ -190,7 +190,7 @@ func (c *Collector) run(providerUpdCh chan *UnitUpdate) {
 		}
 	}()
 
-	cancelPendingResolution := func(key salmon.ItemKey) {
+	cancelPendingResolution := func(key montray.ItemKey) {
 		if pending := pendingResolutions[key]; pending != nil {
 			pending.timer.Stop()
 			delete(pendingResolutions, key)
@@ -217,7 +217,7 @@ func (c *Collector) run(providerUpdCh chan *UnitUpdate) {
 			delete(incidentResolve, ready.key)
 			delete(incidentStates, ready.key)
 			delete(deferredResolutionStates, ready.key)
-			if !c.sendUpdate(&collectors.Update{Items: map[salmon.ItemKey]*salmon.Item{
+			if !c.sendUpdate(&collectors.Update{Items: map[montray.ItemKey]*montray.Item{
 				ready.key: pending.item,
 			}}) {
 				shuttingDown = true
@@ -247,7 +247,7 @@ func (c *Collector) run(providerUpdCh chan *UnitUpdate) {
 		}
 
 		upd := &collectors.Update{
-			Items: make(map[salmon.ItemKey]*salmon.Item, len(sysUpd.Units)),
+			Items: make(map[montray.ItemKey]*montray.Item, len(sysUpd.Units)),
 		}
 
 		// On the first update, ensure every explicitly named unit is represented.
@@ -289,7 +289,7 @@ func (c *Collector) run(providerUpdCh chan *UnitUpdate) {
 				continue
 			}
 
-			if item.State != salmon.ItemStateOK {
+			if item.State != montray.ItemStateOK {
 				// A non-OK update interrupts any recovery window. Preserve the
 				// policy of the condition that originally created the incident,
 				// rather than replacing it as the unit moves through failure states.
@@ -405,11 +405,11 @@ func (c *Collector) sendUpdate(update *collectors.Update) bool {
 	}
 }
 
-func (c *Collector) itemKeyFromSystemdName(name string) salmon.ItemKey {
-	return salmon.ItemKey(c.params.Common.ID + "." + name)
+func (c *Collector) itemKeyFromSystemdName(name string) montray.ItemKey {
+	return montray.ItemKey(c.params.Common.ID + "." + name)
 }
 
-func (c *Collector) getItemFromUnit(unit *Unit) (*salmon.Item, *ConfigResolve) {
+func (c *Collector) getItemFromUnit(unit *Unit) (*montray.Item, *ConfigResolve) {
 	for _, rule := range c.params.Config.UnitRules {
 		if len(rule.Names) > 0 && !containsString(rule.Names, unit.Name) {
 			continue
@@ -421,7 +421,7 @@ func (c *Collector) getItemFromUnit(unit *Unit) (*salmon.Item, *ConfigResolve) {
 
 		// This rule applies to the given unit
 
-		item := &salmon.Item{
+		item := &montray.Item{
 			Key:     c.itemKeyFromSystemdName(unit.Name),
 			Details: systemdUnitDetails(unit),
 		}
@@ -445,7 +445,7 @@ func (c *Collector) getItemFromUnit(unit *Unit) (*salmon.Item, *ConfigResolve) {
 
 		if item.State == "" {
 			// By default, assume error
-			item.State = salmon.ItemStateError
+			item.State = montray.ItemStateError
 		}
 
 		return item, resolve

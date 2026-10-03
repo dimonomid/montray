@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/messengers"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/messengers"
+	"github.com/dimonomid/montray/logs"
 
 	"github.com/juju/errors"
 	"goji.io"
@@ -27,7 +27,7 @@ type Webserver struct {
 	server   *http.Server
 	listener net.Listener
 
-	subs      map[int]chan *salmon.Notification
+	subs      map[int]chan *montray.Notification
 	wsConns   map[int]*wsConn
 	nextSubID int
 	closing   bool
@@ -44,7 +44,7 @@ type Params struct {
 
 type websocketSubscription struct {
 	id   int
-	ch   chan *salmon.Notification
+	ch   chan *montray.Notification
 	conn *wsConn
 }
 
@@ -90,7 +90,7 @@ func New(params Params) (*Webserver, error) {
 		params:          params,
 		authCredentials: authCredentials,
 
-		subs:    make(map[int]chan *salmon.Notification),
+		subs:    make(map[int]chan *montray.Notification),
 		wsConns: make(map[int]*wsConn),
 	}
 
@@ -174,7 +174,7 @@ func (s *Webserver) run() {
 
 // sendNotificationToSubscriber attempts to enqueue notif without blocking.
 // It returns false when the subscriber queue cannot accept the notification.
-func sendNotificationToSubscriber(ch chan<- *salmon.Notification, notif *salmon.Notification) bool {
+func sendNotificationToSubscriber(ch chan<- *montray.Notification, notif *montray.Notification) bool {
 	select {
 	case ch <- notif:
 		return true
@@ -206,7 +206,7 @@ func (s *Webserver) status(w http.ResponseWriter, r *http.Request) (resp interfa
 	}, nil
 }
 
-func (s *Webserver) subscribe(conn *wsConn) (subID int, ch chan *salmon.Notification, ok bool) {
+func (s *Webserver) subscribe(conn *wsConn) (subID int, ch chan *montray.Notification, ok bool) {
 	s.subsMtx.Lock()
 
 	// Shutdown marks closing while holding this same mutex before taking its
@@ -223,7 +223,7 @@ func (s *Webserver) subscribe(conn *wsConn) (subID int, ch chan *salmon.Notifica
 		conn.logger = s.params.Common.Logger
 	}
 
-	ch = make(chan *salmon.Notification, websocketSubscriptionQueueSize)
+	ch = make(chan *montray.Notification, websocketSubscriptionQueueSize)
 	s.subs[subID] = ch
 	s.wsConns[subID] = conn
 	conn.logger.Log(logs.Info, "WebSocket client %d connected from %s", subID, websocketRemoteAddress(conn))

@@ -6,8 +6,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
 )
 
 var testLoggerInternal = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})
@@ -27,8 +27,8 @@ func TestNextReconnectDelayUsesLinearBackoff(t *testing.T) {
 }
 
 func TestSendOngoingIncidentsWaitsForCapacity(t *testing.T) {
-	first := &salmon.Notification{}
-	second := &salmon.Notification{}
+	first := &montray.Notification{}
+	second := &montray.Notification{}
 	events := make(chan ServerEvent, 1)
 	events <- ServerEvent{Kind: ServerEventKindOngoingIncidents, OngoingIncidents: first}
 	client := &WSClient{
@@ -56,13 +56,13 @@ func TestSendOngoingIncidentsWaitsForCapacity(t *testing.T) {
 
 func TestSendOngoingIncidentsUnblocksWhenInterrupted(t *testing.T) {
 	events := make(chan ServerEvent, 1)
-	events <- ServerEvent{Kind: ServerEventKindOngoingIncidents, OngoingIncidents: &salmon.Notification{}}
+	events <- ServerEvent{Kind: ServerEventKindOngoingIncidents, OngoingIncidents: &montray.Notification{}}
 	client := &WSClient{
 		params:    Params{Config: ConfigServer{ID: "test"}, Logger: testLoggerInternal, EventCh: events},
 		interrupt: make(chan struct{}),
 	}
 	result := make(chan bool, 1)
-	go func() { result <- client.sendOngoingIncidents(&salmon.Notification{}) }()
+	go func() { result <- client.sendOngoingIncidents(&montray.Notification{}) }()
 
 	close(client.interrupt)
 	select {

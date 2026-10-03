@@ -3,7 +3,7 @@ package systemd
 import (
 	"time"
 
-	"github.com/dimonomid/salmon"
+	"github.com/dimonomid/montray"
 )
 
 type Config struct {
@@ -19,7 +19,7 @@ type ConfigUnitRule struct {
 	Type string `yaml:"type"`
 
 	// Conditions contains the conditions to check. If none matches, a
-	// salmon.ItemStateError is assumed.
+	// montray.ItemStateError is assumed.
 	Conditions []ConfigCondition `yaml:"conditions"`
 }
 
@@ -40,7 +40,7 @@ type ConfigCondition struct {
 	Resolve *ConfigResolve `yaml:"resolve"`
 
 	// Result is the outcome of the condition if it's true.
-	Result salmon.ItemState `yaml:"result"`
+	Result montray.ItemState `yaml:"result"`
 }
 
 // ConfigResolve defines the recovery policy for an incident created by a

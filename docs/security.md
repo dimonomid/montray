@@ -1,10 +1,11 @@
 # Security
 
-Overall there are three acceptable ways to set up `salmon-watch` and `salmon` communication:
+Overall there are three acceptable ways to set up communication between
+`montray-ui` and `montray-server`:
 
-1. `salmon-watch` -> loopback connection -> locally-running `salmon` listening on `127.0.0.1` - this is the default and most straightforward setup. No authentication or encryption is needed here, since the communication never leaves the local machine.
-2. `salmon-watch` -> ssh tunnel to a server -> `salmon` running on a server listening on `127.0.0.1` - this is the easiest to setup for a remote server, provided that you have an ssh access and you use public key authentication (i.e. you don't have to enter password). In this case, all the authentication and encryption is delegated to `ssh`; salmon itself still doesn't require any authentication.
-3. `salmon-watch` -> TLS connection to a server -> `salmon` running on a server listening on public interface, and requiring bearer token authentication - this is an alternative way to setup secure communication: TLS provides server authentication and encryption, while bearer token provides client authentication.
+1. `montray-ui` -> loopback connection -> locally-running `montray-server` listening on `127.0.0.1` - this is the default and most straightforward setup. No authentication or encryption is needed here, since the communication never leaves the local machine.
+2. `montray-ui` -> SSH tunnel to a server -> `montray-server` listening on `127.0.0.1` - this is the easiest setup for a remote server when you have public-key SSH access. Authentication and encryption are delegated to `ssh`; Montray Server itself still doesn't require authentication.
+3. `montray-ui` -> TLS connection to a server -> `montray-server` listening on a public interface and requiring bearer-token authentication - TLS provides server authentication and encryption, while the bearer token provides client authentication.
 
 Now let's talk about these in more detail.
 
@@ -12,7 +13,7 @@ Now let's talk about these in more detail.
 
 Not much to say here, it's the default configuration.
 
-The `salmon` webserver configuration looks like this - just listening on a local port without requiring any authentication:
+The `montray-server` webserver configuration simply listens on a local port without requiring authentication:
 
 ```yaml
   messengers:
@@ -20,7 +21,7 @@ The `salmon` webserver configuration looks like this - just listening on a local
         listenAddress: "127.0.0.1:41990"
 ```
 
-And `salmon-watch` configuration is equally boring:
+And the Montray UI configuration is equally boring:
 
 ```yaml
 wsClient:
@@ -29,13 +30,17 @@ wsClient:
       addr: localhost:41990
 ```
 
-## Remote salmon via ssh tunnel
+## Remote Montray Server via SSH tunnel
 
-This is the easiest to setup for a remote server, provided that you have an ssh access and you use public key authentication (i.e. you don't have to enter password). In this case, all the authentication and encryption is delegated to `ssh`; salmon itself still doesn't require any authentication.
+This is the easiest setup for a remote server when you have public-key SSH
+access. Authentication and encryption are delegated to `ssh`; Montray Server
+itself still doesn't require authentication.
 
-The `salmon` config stays exactly as it is with the loopback connection - simply listening on a local port without requiring any authentication, because from the `salmon`'s point of view, the connection is still local.
+The `montray-server` config stays exactly as it is with the loopback connection:
+it listens locally without authentication because, from the server's point of
+view, the connection is still local.
 
-While `salmon-watch` configuration should specify the tunnel:
+While the Montray UI configuration should specify the tunnel:
 
 ```yaml
     - id: myserver            # Arbitrary but unique ID for this server.
@@ -44,25 +49,27 @@ While `salmon-watch` configuration should specify the tunnel:
           host: myserver.com  # TODO: Your actual server hostname
           user: myuser        # TODO: Your actual ssh user
           port: 22            # Change if using non-default ssh port
-          remoteSalmonAddr: 127.0.0.1:41990
+          remoteServerAddr: 127.0.0.1:41990
 ```
 
-Notice that the entry has no `addr`. For the built-in SSH tunnel, omitting it tells `salmon-watch` to allocate an available port on `127.0.0.1`. The selected address is written to the log and reused when the tunnel process restarts.
+Notice that the entry has no `addr`. For the built-in SSH tunnel, omitting it tells Montray UI to allocate an available port on `127.0.0.1`. The selected address is written to the log and reused when the tunnel process restarts.
 
-Salmon Watch then spawns an external `ssh` process forwarding the remote port 41990 to the allocated local port, and connects once the tunnel is ready. The ssh command will be equivalent to this, with the allocated port substituted:
+Montray UI then spawns an external `ssh` process forwarding the remote port 41990 to the allocated local port, and connects once the tunnel is ready. The ssh command will be equivalent to this, with the allocated port substituted:
 
 ```
 ssh -N -T \
   -o BatchMode=yes \
   -o ExitOnForwardFailure=yes -o ConnectTimeout=15 \
   -o ServerAliveInterval=10 -o ServerAliveCountMax=3 \
-  -o PermitLocalCommand=yes -o "LocalCommand=echo SALMON_TUNNEL_READY" \
+  -o PermitLocalCommand=yes -o "LocalCommand=echo MONTRAY_TUNNEL_READY" \
   -p 22 \
   -L 127.0.0.1:<allocated-port>:127.0.0.1:41990 \
   myuser@myserver.com
 ```
 
-You can set an explicit loopback `addr` if you need a stable local port. Note that custom tunnel commands (described below) must always set one because salmon watch cannot inject an automatically selected port into an arbitrary command.
+You can set an explicit loopback `addr` if you need a stable local port. Note
+that custom tunnel commands (described below) must always set one because
+Montray UI cannot inject an automatically selected port into an arbitrary command.
 
 If you need to pass some extra arguments to `ssh`, such as to specify a
 specific private key to use or anything else, you can specify them using the
@@ -79,9 +86,9 @@ specific private key to use or anything else, you can specify them using the
 
 And they will be added to the ssh command.
 
-You can also establish the tunnel manually if you want, and get the same result, but I find it convenient to let `salmon-watch` manage the tunnel for me.
+You can also establish the tunnel manually if you want, and get the same result, but I find it convenient to let Montray UI manage the tunnel for me.
 
-## Remote salmon via custom tunnel command
+## Remote Montray Server via custom tunnel command
 
 You could use any custom command to establish a tunnel, like that:
 
@@ -110,50 +117,56 @@ As you see, we're specifying a raw command to be executed, and optionally also a
 
 Make sure that the custom tunnel command does not spawn subprocesses, and that when the tunnel is dead, the command should exit.
 
-## Remote salmon via TLS and bearer token
+## Remote Montray Server via TLS and bearer token
 
 This is a bit more involved to set up, so before you go there, make sure you're familiar with the simpler alternatives explained above.
 
-In this setup, `salmon` listens on a public interface, so both TLS and authentication should be configured: TLS encrypts the connection and makes sure that `salmon-watch` is talking to the expected server, while the bearer token lets `salmon` authenticate `salmon-watch`.
+In this setup, `montray-server` listens on a public interface, so both TLS and
+authentication should be configured. TLS encrypts the connection and lets
+Montray UI verifies the server, while the bearer token lets `montray-server`
+authenticate it.
 
 First, let's setup the TLS part.
 
 ### Setting up TLS
 
-You need a TLS certificate and its private key on the server. The user which runs `salmon` service (in the default setup, the user is also named `salmon`) must be able to read both files.
+You need a TLS certificate and its private key on the server. The user running
+`montray-server` (named `montray` by the default setup) must be able to read
+both files.
 
 If you don't have an existing certificate that you can use, you can create a self-signed one, like that (optionally replace `myserverforcert.com` with whatever hostname you want to use in the certificate, and also adjust the expiration `-days` as you need):
 
 ```bash
-sudo mkdir -p /etc/salmon/tls
-sudo chown root:salmon /etc/salmon/tls
-sudo chmod 0750 /etc/salmon/tls
+sudo mkdir -p /etc/montray-server/tls
+sudo chown root:montray /etc/montray-server/tls
+sudo chmod 0750 /etc/montray-server/tls
 
 sudo openssl req -x509 -newkey rsa:3072 -sha256 -days 3650 -nodes \
-  -keyout /etc/salmon/tls/privkey.pem \
-  -out /etc/salmon/tls/cert.pem \
+  -keyout /etc/montray-server/tls/privkey.pem \
+  -out /etc/montray-server/tls/cert.pem \
   -subj "/CN=myserverforcert.com" \
   -addext "subjectAltName=DNS:myserverforcert.com" \
   -addext "basicConstraints=critical,CA:FALSE" \
   -addext "keyUsage=critical,digitalSignature,keyEncipherment" \
   -addext "extendedKeyUsage=serverAuth"
 
-sudo chown root:salmon /etc/salmon/tls/privkey.pem /etc/salmon/tls/cert.pem
-sudo chmod 0640 /etc/salmon/tls/privkey.pem /etc/salmon/tls/cert.pem
+sudo chown root:montray /etc/montray-server/tls/privkey.pem /etc/montray-server/tls/cert.pem
+sudo chmod 0640 /etc/montray-server/tls/privkey.pem /etc/montray-server/tls/cert.pem
 ```
 
-In the end, with a normal certificate or a self-signed one, the `salmon` webserver configuration could look like this:
+In the end, with a normal certificate or a self-signed one, the
+`montray-server` webserver configuration could look like this:
 
 ```yaml
   messengers:
     - webserver:
         listenAddress: "0.0.0.0:41990"
         tls:
-          certFile: "/etc/salmon/tls/cert.pem"     # Adjust if needed
-          keyFile: "/etc/salmon/tls/privkey.pem"   # Adjust if needed
+          certFile: "/etc/montray-server/tls/cert.pem"     # Adjust if needed
+          keyFile: "/etc/montray-server/tls/privkey.pem"   # Adjust if needed
 ```
 
-On the `salmon-watch` side, we need to specify that we want to use TLS. If the server certificate is issued by a CA trusted by your operating system, we just need to add an empty `tls` object to the corresponding server:
+On the Montray UI side, we need to specify that we want to use TLS. If the server certificate is issued by a CA trusted by your operating system, we just need to add an empty `tls` object to the corresponding server:
 
 ```yaml
 wsClient:
@@ -175,15 +188,18 @@ With that, TLS should be set up now, and we move on to the bearer token.
 
 ### Setting up bearer token
 
-Salmon-Watch has a convenient command for this:
+Montray UI has a convenient command for this:
 
 ```
-salmon-watch generate-bearer-token myserver
+montray-ui generate-bearer-token myserver
 ```
 
-Here `myserver` is the ID of the corresponding server in the `salmon-watch` configuration. The command creates a token file with owner-only permissions and prints the exact configuration snippets to add on both sides. `salmon-watch` stores the token itself, while `salmon` only stores its SHA-256 hash.
+Here `myserver` is the ID of the corresponding server in the Montray UI
+configuration. The command creates a token file with owner-only permissions and
+prints the exact configuration snippets to add on both sides. Montray UI stores
+the token itself, while `montray-server` stores only its SHA-256 hash.
 
-As the command output tells us, we need to add the `auth` object to `salmon-watch` config:
+As the command output tells us, we need to add the `auth` object to the Montray UI config:
 
 ```yaml
 wsClient:

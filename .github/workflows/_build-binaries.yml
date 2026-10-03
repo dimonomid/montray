@@ -21,8 +21,8 @@ permissions:
   id-token: write
 
 jobs:
-  salmon:
-    name: salmon (Linux)
+  montray-server:
+    name: montray-server (Linux)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -44,14 +44,14 @@ jobs:
           echo "ARTIFACT_VERSION=${version#v}" >> "$GITHUB_ENV"
           echo "ARTIFACT_ARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
 
-      - name: Build salmon
+      - name: Build montray-server
         shell: bash
-        run: make salmon
+        run: make montray-server
 
-      - name: Package salmon
+      - name: Package montray-server
         run: |
           mkdir release
-          tar -czf "release/salmon-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" -C bin salmon
+          tar -czf "release/montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" -C bin montray-server
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.24.2
@@ -64,20 +64,20 @@ jobs:
       - name: Generate SBOM and signatures
         run: |
           bash util/prepare_release_artifact.sh \
-            "release/salmon-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" \
-            bin/salmon \
-            "salmon-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}"
+            "release/montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" \
+            bin/montray-server \
+            "montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}"
 
-      - name: Upload intermediary salmon artifacts
+      - name: Upload intermediary montray-server artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ inputs.artifact_prefix }}-salmon-linux
+          name: ${{ inputs.artifact_prefix }}-montray-server-linux
           path: release/*
           if-no-files-found: error
           retention-days: ${{ inputs.retention_days }}
 
-  watch-legacy:
-    name: salmon-watch-legacy (${{ matrix.os }})
+  montray-ui-legacy:
+    name: montray-ui-legacy (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -123,22 +123,22 @@ jobs:
           echo "ARTIFACT_VERSION=${version#v}" >> "$GITHUB_ENV"
           echo "ARTIFACT_ARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
 
-      - name: Build salmon-watch-legacy
+      - name: Build montray-ui-legacy
         shell: bash
-        run: make salmon-watch-legacy
+        run: make montray-ui-legacy
 
       - name: Package Unix binary
         if: matrix.os != 'windows'
         run: |
           mkdir release
-          tar -czf "release/salmon-watch-LEGACY-WEB-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz" -C bin salmon-watch-legacy
+          tar -czf "release/montray-ui-legacy-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz" -C bin montray-ui-legacy
 
       - name: Package Windows binary
         if: matrix.os == 'windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path release
-          Compress-Archive -Path bin/salmon-watch-legacy.exe -DestinationPath "release/salmon-watch-LEGACY-WEB-${env:ARTIFACT_VERSION}_windows_${env:ARTIFACT_ARCH}.zip"
+          Compress-Archive -Path bin/montray-ui-legacy.exe -DestinationPath "release/montray-ui-legacy-${env:ARTIFACT_VERSION}_windows_${env:ARTIFACT_ARCH}.zip"
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.24.2
@@ -152,26 +152,26 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "windows" ]]; then
-            archive="release/salmon-watch-LEGACY-WEB-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.zip"
-            binary="bin/salmon-watch-legacy.exe"
-            signature_basename="salmon-watch-LEGACY-WEB-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.exe"
+            archive="release/montray-ui-legacy-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.zip"
+            binary="bin/montray-ui-legacy.exe"
+            signature_basename="montray-ui-legacy-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.exe"
           else
-            archive="release/salmon-watch-LEGACY-WEB-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz"
-            binary="bin/salmon-watch-legacy"
-            signature_basename="salmon-watch-LEGACY-WEB-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}"
+            archive="release/montray-ui-legacy-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz"
+            binary="bin/montray-ui-legacy"
+            signature_basename="montray-ui-legacy-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}"
           fi
           bash util/prepare_release_artifact.sh "$archive" "$binary" "$signature_basename"
 
-      - name: Upload intermediary salmon-watch-legacy artifacts
+      - name: Upload intermediary montray-ui-legacy artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ inputs.artifact_prefix }}-salmon-watch-legacy-${{ matrix.os }}
+          name: ${{ inputs.artifact_prefix }}-montray-ui-legacy-${{ matrix.os }}
           path: release/*
           if-no-files-found: error
           retention-days: ${{ inputs.retention_days }}
 
-  watch:
-    name: salmon-watch (${{ matrix.os }})
+  montray-ui:
+    name: montray-ui (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -217,28 +217,28 @@ jobs:
           echo "ARTIFACT_VERSION=${version#v}" >> "$GITHUB_ENV"
           echo "ARTIFACT_ARCH=$arch" >> "$GITHUB_ENV"
 
-      - name: Build salmon-watch
+      - name: Build montray-ui
         if: matrix.os != 'linux'
         shell: bash
-        run: make salmon-watch
+        run: make montray-ui
 
-      - name: Build salmon-watch on Ubuntu 20.04
+      - name: Build montray-ui on Ubuntu 20.04
         if: matrix.os == 'linux'
         shell: bash
-        run: bash .github/build-salmon-watch-linux.sh
+        run: bash .github/build-montray-ui-linux.sh
 
       - name: Package Unix binary
         if: matrix.os != 'windows'
         run: |
           mkdir release
-          tar -czf "release/salmon-watch-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz" -C bin salmon-watch
+          tar -czf "release/montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz" -C bin montray-ui
 
       - name: Package Windows binary
         if: matrix.os == 'windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path release
-          Compress-Archive -Path bin/salmon-watch.exe -DestinationPath "release/salmon-watch-${env:ARTIFACT_VERSION}_windows_${env:ARTIFACT_ARCH}.zip"
+          Compress-Archive -Path bin/montray-ui.exe -DestinationPath "release/montray-ui-${env:ARTIFACT_VERSION}_windows_${env:ARTIFACT_ARCH}.zip"
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.24.2
@@ -252,20 +252,20 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" == "windows" ]]; then
-            archive="release/salmon-watch-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.zip"
-            binary="bin/salmon-watch.exe"
-            signature_basename="salmon-watch-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.exe"
+            archive="release/montray-ui-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.zip"
+            binary="bin/montray-ui.exe"
+            signature_basename="montray-ui-${ARTIFACT_VERSION}_windows_${ARTIFACT_ARCH}.exe"
           else
-            archive="release/salmon-watch-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz"
-            binary="bin/salmon-watch"
-            signature_basename="salmon-watch-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}"
+            archive="release/montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz"
+            binary="bin/montray-ui"
+            signature_basename="montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}"
           fi
           bash util/prepare_release_artifact.sh "$archive" "$binary" "$signature_basename"
 
-      - name: Upload intermediary salmon-watch artifacts
+      - name: Upload intermediary montray-ui artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ inputs.artifact_prefix }}-salmon-watch-${{ matrix.os }}
+          name: ${{ inputs.artifact_prefix }}-montray-ui-${{ matrix.os }}
           path: release/*
           if-no-files-found: error
           retention-days: ${{ inputs.retention_days }}
@@ -273,9 +273,9 @@ jobs:
   assemble:
     name: Assemble
     needs:
-      - salmon
-      - watch-legacy
-      - watch
+      - montray-server
+      - montray-ui-legacy
+      - montray-ui
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -320,13 +320,13 @@ jobs:
           ARTIFACT_PREFIX: ${{ inputs.artifact_prefix }}
         run: |
           for suffix in \
-            salmon-linux \
-            salmon-watch-legacy-linux \
-            salmon-watch-legacy-macos \
-            salmon-watch-legacy-windows \
-            salmon-watch-linux \
-            salmon-watch-macos \
-            salmon-watch-windows; do
+            montray-server-linux \
+            montray-ui-legacy-linux \
+            montray-ui-legacy-macos \
+            montray-ui-legacy-windows \
+            montray-ui-linux \
+            montray-ui-macos \
+            montray-ui-windows; do
             artifact_name="${ARTIFACT_PREFIX}-${suffix}"
             artifact_id="$(
               gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" \

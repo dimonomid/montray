@@ -7,10 +7,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/collectors"
-	execcollector "github.com/dimonomid/salmon/backend/collectors/exec"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/collectors"
+	execcollector "github.com/dimonomid/montray/backend/collectors/exec"
+	"github.com/dimonomid/montray/logs"
 )
 
 var testLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})
@@ -21,21 +21,21 @@ func TestCollectorMapsCommandResultsToItems(t *testing.T) {
 		description string
 		command     []string
 		conditions  []execcollector.ConfigCondition
-		wantState   salmon.ItemState
+		wantState   montray.ItemState
 		wantText    string
 		wantAbsent  []string
 	}{
 		{
 			name:       "default conditions accept exit zero",
 			command:    []string{"sh", "-c", "exit 0"},
-			wantState:  salmon.ItemStateOK,
+			wantState:  montray.ItemStateOK,
 			wantText:   "exit code: 0",
 			wantAbsent: []string{"condition"},
 		},
 		{
 			name:       "default conditions reject nonzero exit",
 			command:    []string{"sh", "-c", "exit 9"},
-			wantState:  salmon.ItemStateError,
+			wantState:  montray.ItemStateError,
 			wantText:   "exit code: 9",
 			wantAbsent: []string{"condition"},
 		},
@@ -44,10 +44,10 @@ func TestCollectorMapsCommandResultsToItems(t *testing.T) {
 			description: "probe",
 			command:     []string{"sh", "-c", "printf 'disk full\\nignored\\n'; exit 7"},
 			conditions: []execcollector.ConfigCondition{
-				{ExitCode: "0", Result: salmon.ItemStateOK},
-				{ExitCode: "7", Result: salmon.ItemStateWarning},
+				{ExitCode: "0", Result: montray.ItemStateOK},
+				{ExitCode: "7", Result: montray.ItemStateWarning},
 			},
-			wantState: salmon.ItemStateWarning,
+			wantState: montray.ItemStateWarning,
 			wantText:  "probe: disk full",
 			wantAbsent: []string{
 				"ignored",
@@ -58,24 +58,24 @@ func TestCollectorMapsCommandResultsToItems(t *testing.T) {
 		{
 			name:       "unmatched exit code defaults to error",
 			command:    []string{"sh", "-c", "exit 9"},
-			conditions: []execcollector.ConfigCondition{{ExitCode: "0", Result: salmon.ItemStateOK}},
-			wantState:  salmon.ItemStateError,
+			conditions: []execcollector.ConfigCondition{{ExitCode: "0", Result: montray.ItemStateOK}},
+			wantState:  montray.ItemStateError,
 			wantText:   "exit code: 9",
 			wantAbsent: []string{"condition"},
 		},
 		{
 			name:       "stderr is not used as details",
 			command:    []string{"sh", "-c", "printf 'stderr details\\n' >&2; exit 7"},
-			conditions: []execcollector.ConfigCondition{{Result: salmon.ItemStateError}},
-			wantState:  salmon.ItemStateError,
+			conditions: []execcollector.ConfigCondition{{Result: montray.ItemStateError}},
+			wantState:  montray.ItemStateError,
 			wantText:   "exit code: 7",
 			wantAbsent: []string{"stderr details", "condition"},
 		},
 		{
 			name:       "command start failure is an incident",
-			command:    []string{"/a/salmon-command-that-does-not-exist"},
-			conditions: []execcollector.ConfigCondition{{Result: salmon.ItemStateOK}},
-			wantState:  salmon.ItemStateError,
+			command:    []string{"/a/montray-command-that-does-not-exist"},
+			conditions: []execcollector.ConfigCondition{{Result: montray.ItemStateOK}},
+			wantState:  montray.ItemStateError,
 			wantText:   "failed to start command",
 		},
 	}
@@ -212,11 +212,11 @@ func TestCollectorReportsTimeoutAndContinuesPolling(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	first := receiveUpdate(t, updates).Items["check.exec_result"]
-	if first == nil || first.State != salmon.ItemStateError || !strings.Contains(first.Details, "Command timed out after 40ms") {
+	if first == nil || first.State != montray.ItemStateError || !strings.Contains(first.Details, "Command timed out after 40ms") {
 		t.Fatalf("first result = %#v, want timeout error", first)
 	}
 	second := receiveUpdate(t, updates).Items["check.exec_result"]
-	if second == nil || second.State != salmon.ItemStateOK {
+	if second == nil || second.State != montray.ItemStateOK {
 		t.Fatalf("second result = %#v, want recovered OK result", second)
 	}
 }

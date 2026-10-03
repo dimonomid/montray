@@ -16,21 +16,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/backend/messengers"
-	webserver "github.com/dimonomid/salmon/backend/messengers/webserver"
-	"github.com/dimonomid/salmon/wsclient"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/backend/messengers"
+	webserver "github.com/dimonomid/montray/backend/messengers/webserver"
+	"github.com/dimonomid/montray/wsclient"
 )
 
 func TestClientReceivesIncidentsFromTLSServerWithSelfSignedCertificate(t *testing.T) {
-	certFile, keyFile := writeSelfSignedServerCertificate(t, "salmon.test")
+	certFile, keyFile := writeSelfSignedServerCertificate(t, "montray.test")
 	board := itemsboard.New()
-	board.Set([]*salmon.ItemWContext{{
-		Item:              salmon.Item{Key: "disk", State: salmon.ItemStateError, Details: "full"},
+	board.Set([]*montray.ItemWContext{{
+		Item:              montray.Item{Key: "disk", State: montray.ItemStateError, Details: "full"},
 		IncidentStartedAt: time.Now(),
 	}})
-	notifications := make(chan *salmon.Notification)
+	notifications := make(chan *montray.Notification)
 	serverDone := make(chan struct{})
 	server, err := webserver.New(webserver.Params{
 		Common: messengers.Params{
@@ -56,7 +56,7 @@ func TestClientReceivesIncidentsFromTLSServerWithSelfSignedCertificate(t *testin
 		}
 	})
 
-	assertTLSConnectionFails(t, server.Addr().String(), &wsclient.ConfigTLS{ServerName: "salmon.test"}, "certificate signed by unknown authority")
+	assertTLSConnectionFails(t, server.Addr().String(), &wsclient.ConfigTLS{ServerName: "montray.test"}, "certificate signed by unknown authority")
 	assertTLSConnectionFails(t, server.Addr().String(), &wsclient.ConfigTLS{CAFile: certFile}, "doesn't contain any IP SANs")
 
 	events := make(chan wsclient.ServerEvent, 16)
@@ -64,7 +64,7 @@ func TestClientReceivesIncidentsFromTLSServerWithSelfSignedCertificate(t *testin
 		Config: wsclient.ConfigServer{
 			ID:   "test",
 			Addr: server.Addr().String(),
-			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "salmon.test"},
+			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "montray.test"},
 		},
 		Logger:         testLogger,
 		EventCh:        events,
@@ -94,15 +94,15 @@ func TestClientReceivesIncidentsFromTLSServerWithSelfSignedCertificate(t *testin
 }
 
 func TestClientAuthenticatesToTLSServerWithBearerToken(t *testing.T) {
-	certFile, keyFile := writeSelfSignedServerCertificate(t, "salmon.test")
+	certFile, keyFile := writeSelfSignedServerCertificate(t, "montray.test")
 	token := "valid-generated-bearer-token"
 	tokenHash := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(token)))
 	board := itemsboard.New()
-	board.Set([]*salmon.ItemWContext{{
-		Item:              salmon.Item{Key: "disk", State: salmon.ItemStateError, Details: "full"},
+	board.Set([]*montray.ItemWContext{{
+		Item:              montray.Item{Key: "disk", State: montray.ItemStateError, Details: "full"},
 		IncidentStartedAt: time.Now(),
 	}})
-	notifications := make(chan *salmon.Notification)
+	notifications := make(chan *montray.Notification)
 	serverDone := make(chan struct{})
 	server, err := webserver.New(webserver.Params{
 		Common: messengers.Params{
@@ -134,7 +134,7 @@ func TestClientAuthenticatesToTLSServerWithBearerToken(t *testing.T) {
 	missingClient, err := wsclient.New(wsclient.Params{
 		Config: wsclient.ConfigServer{
 			ID: "test", Addr: server.Addr().String(),
-			TLS: &wsclient.ConfigTLS{CAFile: certFile, ServerName: "salmon.test"},
+			TLS: &wsclient.ConfigTLS{CAFile: certFile, ServerName: "montray.test"},
 		},
 		Logger:         testLogger,
 		EventCh:        missingEvents,
@@ -154,7 +154,7 @@ func TestClientAuthenticatesToTLSServerWithBearerToken(t *testing.T) {
 	wrongClient, err := wsclient.New(wsclient.Params{
 		Config: wsclient.ConfigServer{
 			ID: "test", Addr: server.Addr().String(),
-			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "salmon.test"},
+			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "montray.test"},
 			Auth: &wsclient.ConfigAuth{BearerTokenFile: wrongTokenFile},
 		},
 		Logger:         testLogger,
@@ -175,7 +175,7 @@ func TestClientAuthenticatesToTLSServerWithBearerToken(t *testing.T) {
 	client, err := wsclient.New(wsclient.Params{
 		Config: wsclient.ConfigServer{
 			ID: "test", Addr: server.Addr().String(),
-			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "salmon.test"},
+			TLS:  &wsclient.ConfigTLS{CAFile: certFile, ServerName: "montray.test"},
 			Auth: &wsclient.ConfigAuth{BearerTokenFile: tokenFile},
 		},
 		Logger:         testLogger,

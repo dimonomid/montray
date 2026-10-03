@@ -8,16 +8,16 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/backend/messengers"
-	"github.com/dimonomid/salmon/backend/messengers/filelogger"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/backend/messengers"
+	"github.com/dimonomid/montray/backend/messengers/filelogger"
+	"github.com/dimonomid/montray/logs"
 )
 
 func TestLoggerWritesObservableIncidentTransitions(t *testing.T) {
 	path := t.TempDir() + "/events.log"
-	notifications := make(chan *salmon.Notification, 1)
+	notifications := make(chan *montray.Notification, 1)
 	done := make(chan struct{})
 	_, err := filelogger.New(filelogger.Params{
 		Common: messengers.Params{
@@ -32,13 +32,13 @@ func TestLoggerWritesObservableIncidentTransitions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	incident := &salmon.ItemWContext{Item: salmon.Item{Key: "systemd.sync", State: salmon.ItemStateError, Details: "failed"}}
-	notifications <- &salmon.Notification{
+	incident := &montray.ItemWContext{Item: montray.Item{Key: "systemd.sync", State: montray.ItemStateError, Details: "failed"}}
+	notifications <- &montray.Notification{
 		Time: time.Date(2026, 8, 23, 12, 34, 56, 0, time.Local),
-		OngoingIncidents: salmon.OngoingIncidentsWDelta{
-			Added:   []*salmon.ItemWContext{incident},
-			Updated: []*salmon.ItemWContext{{Item: salmon.Item{Key: "disk.free", State: salmon.ItemStateWarning, Details: "low"}}},
-			Removed: []*salmon.ItemWContext{{Item: salmon.Item{Key: "network.dns", State: salmon.ItemStateError}}},
+		OngoingIncidents: montray.OngoingIncidentsWDelta{
+			Added:   []*montray.ItemWContext{incident},
+			Updated: []*montray.ItemWContext{{Item: montray.Item{Key: "disk.free", State: montray.ItemStateWarning, Details: "low"}}},
+			Removed: []*montray.ItemWContext{{Item: montray.Item{Key: "network.dns", State: montray.ItemStateError}}},
 		},
 	}
 	close(notifications)

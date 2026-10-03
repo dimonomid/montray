@@ -9,10 +9,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/collectors"
-	"github.com/dimonomid/salmon/backend/collectors/systemd"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/collectors"
+	"github.com/dimonomid/montray/backend/collectors/systemd"
+	"github.com/dimonomid/montray/logs"
 )
 
 var testLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})
@@ -35,19 +35,19 @@ func TestCollectorAppliesOrderedRulesAndReportsRemovedUnits(t *testing.T) {
 		Config: systemd.Config{UnitRules: []systemd.ConfigUnitRule{
 			{
 				Names:      []string{"important.service", "another-important.service"},
-				Conditions: []systemd.ConfigCondition{{State: "active", Result: salmon.ItemStateOK}, {Result: salmon.ItemStateError}},
+				Conditions: []systemd.ConfigCondition{{State: "active", Result: montray.ItemStateOK}, {Result: montray.ItemStateError}},
 			},
 			{
 				Names:      []string{"ignored.service"},
-				Conditions: []systemd.ConfigCondition{{Result: salmon.ItemStateOK}},
+				Conditions: []systemd.ConfigCondition{{Result: montray.ItemStateOK}},
 			},
 			{
 				Type: "service",
 				Conditions: []systemd.ConfigCondition{
-					{SubStateContains: "auto-restart", Result: salmon.ItemStateWarning},
-					{State: "active", Result: salmon.ItemStateOK},
-					{State: "activating", Result: salmon.ItemStateOK},
-					{Result: salmon.ItemStateWarning},
+					{SubStateContains: "auto-restart", Result: montray.ItemStateWarning},
+					{State: "active", Result: montray.ItemStateOK},
+					{State: "activating", Result: montray.ItemStateOK},
+					{Result: montray.ItemStateWarning},
 				},
 			},
 		}},
@@ -72,16 +72,16 @@ func TestCollectorAppliesOrderedRulesAndReportsRemovedUnits(t *testing.T) {
 		"socket.socket":             {Name: "socket.socket", State: "failed"},
 	}}
 	first := receiveSystemdUpdate(t, updates)
-	assertSystemdItem(t, first, "services.failed.service", salmon.ItemStateWarning)
-	assertSystemdItem(t, first, "services.active.service", salmon.ItemStateOK)
-	assertSystemdItem(t, first, "services.restarting.service", salmon.ItemStateWarning)
-	assertSystemdItem(t, first, "services.restart-queued.service", salmon.ItemStateWarning)
-	assertSystemdItem(t, first, "services.restart-wait.service", salmon.ItemStateWarning)
-	assertSystemdItem(t, first, "services.recovering.service", salmon.ItemStateWarning)
-	assertSystemdItem(t, first, "services.starting.service", salmon.ItemStateOK)
-	assertSystemdItem(t, first, "services.important.service", salmon.ItemStateError)
-	assertSystemdItem(t, first, "services.another-important.service", salmon.ItemStateOK)
-	assertSystemdItem(t, first, "services.ignored.service", salmon.ItemStateOK)
+	assertSystemdItem(t, first, "services.failed.service", montray.ItemStateWarning)
+	assertSystemdItem(t, first, "services.active.service", montray.ItemStateOK)
+	assertSystemdItem(t, first, "services.restarting.service", montray.ItemStateWarning)
+	assertSystemdItem(t, first, "services.restart-queued.service", montray.ItemStateWarning)
+	assertSystemdItem(t, first, "services.restart-wait.service", montray.ItemStateWarning)
+	assertSystemdItem(t, first, "services.recovering.service", montray.ItemStateWarning)
+	assertSystemdItem(t, first, "services.starting.service", montray.ItemStateOK)
+	assertSystemdItem(t, first, "services.important.service", montray.ItemStateError)
+	assertSystemdItem(t, first, "services.another-important.service", montray.ItemStateOK)
+	assertSystemdItem(t, first, "services.ignored.service", montray.ItemStateOK)
 	assertSystemdDetails(t, first, "services.failed.service", "Unit failed.service is failed")
 	assertSystemdDetails(t, first, "services.restarting.service", "Unit restarting.service is activating (auto-restart)")
 	assertSystemdDetails(t, first, "services.restart-queued.service", "Unit restart-queued.service is activating (auto-restart-queued)")
@@ -96,7 +96,7 @@ func TestCollectorAppliesOrderedRulesAndReportsRemovedUnits(t *testing.T) {
 
 	provider.updates <- &systemd.UnitUpdate{Units: map[string]*systemd.Unit{"failed.service": nil}}
 	removed := receiveSystemdUpdate(t, updates)
-	assertSystemdItem(t, removed, "services.failed.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, removed, "services.failed.service", montray.ItemStateWarning)
 
 	collector.Close()
 	select {
@@ -118,17 +118,17 @@ func TestCollectorResolvePolicyRequiresContinuousRecovery(t *testing.T) {
 			Conditions: []systemd.ConfigCondition{
 				{
 					SubStateContains: "auto-restart",
-					Result:           salmon.ItemStateWarning,
+					Result:           montray.ItemStateWarning,
 					Resolve: &systemd.ConfigResolve{
 						After:  5 * time.Second,
 						States: []systemd.UnitState{"active", "inactive", systemd.UnitStateNotSentBySystemd},
 					},
 				},
-				{State: "active", Result: salmon.ItemStateOK},
-				{State: "inactive", Result: salmon.ItemStateOK},
-				{State: "activating", Result: salmon.ItemStateOK},
-				{State: systemd.UnitStateNotSentBySystemd, Result: salmon.ItemStateOK},
-				{Result: salmon.ItemStateWarning},
+				{State: "active", Result: montray.ItemStateOK},
+				{State: "inactive", Result: montray.ItemStateOK},
+				{State: "activating", Result: montray.ItemStateOK},
+				{State: systemd.UnitStateNotSentBySystemd, Result: montray.ItemStateOK},
+				{Result: montray.ItemStateWarning},
 			},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
@@ -142,76 +142,76 @@ func TestCollectorResolvePolicyRequiresContinuousRecovery(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 
 	// A restart loop can spend longer than resolve.after in activating (start)
 	// before failing again. Although that transitional state is normally OK, it
 	// must not resolve an existing auto-restart incident.
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "start")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("transitional barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, `Unit flapping.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active inactive not-sent-by-systemd])`)
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, `Unit flapping.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active inactive not-sent-by-systemd])`)
 	assertSystemdUpdateError(t, updates, "transitional barrier")
 	mockClock.Add(10 * time.Second)
 	assertNoSystemdUpdate(t, updates)
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 
 	provider.updates <- systemdUnitUpdate("flapping.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("healthy barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "healthy barrier")
 	assertNoSystemdUpdate(t, updates)
 
 	mockClock.Add(3 * time.Second)
 	provider.updates <- systemdUnitUpdate("flapping.service", "active", "exited")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("updated healthy barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service is active (exited); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service is active (exited); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "updated healthy barrier")
 	mockClock.Add(2 * time.Second)
 	recovered := receiveSystemdUpdate(t, updates)
-	assertSystemdItem(t, recovered, "services.flapping.service", salmon.ItemStateOK)
+	assertSystemdItem(t, recovered, "services.flapping.service", montray.ItemStateOK)
 	assertSystemdDetails(t, recovered, "services.flapping.service", "Unit flapping.service is active (exited)")
 
 	// A new unhealthy update cancels a pending recovery. The next healthy
 	// update must then remain healthy for the full resolve.after duration.
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 	provider.updates <- systemdUnitUpdate("flapping.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("second healthy barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "second healthy barrier")
 	mockClock.Add(2 * time.Second)
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart-queued")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 	mockClock.Add(5 * time.Second)
 	assertNoSystemdUpdate(t, updates)
 
 	provider.updates <- systemdUnitUpdate("flapping.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("final healthy barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "final healthy barrier")
 	mockClock.Add(5 * time.Second)
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateOK)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateOK)
 
 	// A disabled service can disappear from systemd after it is stopped. That
 	// stable absence must resolve its previous restart-loop incident too.
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 	provider.updates <- &systemd.UnitUpdate{Units: map[string]*systemd.Unit{"flapping.service": nil}}
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("missing-unit barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service was not reported by systemd; incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service was not reported by systemd; incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "missing-unit barrier")
 	mockClock.Add(5 * time.Second)
 	missing := receiveSystemdUpdate(t, updates)
-	assertSystemdItem(t, missing, "services.flapping.service", salmon.ItemStateOK)
+	assertSystemdItem(t, missing, "services.flapping.service", montray.ItemStateOK)
 	assertSystemdDetails(t, missing, "services.flapping.service", "Unit flapping.service was not reported by systemd")
 
 	// resolve is attached to the condition that starts an incident. A
 	// warning from the fallback condition therefore resolves immediately.
 	provider.updates <- systemdUnitUpdate("failed.service", "failed", "failed")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.failed.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.failed.service", montray.ItemStateWarning)
 	provider.updates <- systemdUnitUpdate("failed.service", "active", "running")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.failed.service", salmon.ItemStateOK)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.failed.service", montray.ItemStateOK)
 }
 
 func TestCollectorResolvePolicyUsesConfiguredStates(t *testing.T) {
@@ -226,13 +226,13 @@ func TestCollectorResolvePolicyUsesConfiguredStates(t *testing.T) {
 			Conditions: []systemd.ConfigCondition{
 				{
 					SubStateContains: "auto-restart",
-					Result:           salmon.ItemStateWarning,
+					Result:           montray.ItemStateWarning,
 					Resolve: &systemd.ConfigResolve{
 						After:  time.Second,
 						States: []systemd.UnitState{"activating"},
 					},
 				},
-				{State: "activating", Result: salmon.ItemStateOK},
+				{State: "activating", Result: montray.ItemStateOK},
 			},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
@@ -246,13 +246,13 @@ func TestCollectorResolvePolicyUsesConfiguredStates(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	provider.updates <- systemdUnitUpdate("custom-recovery.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.custom-recovery.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.custom-recovery.service", montray.ItemStateWarning)
 	provider.updates <- systemdUnitUpdate("custom-recovery.service", "activating", "start")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("configured-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.custom-recovery.service", salmon.ItemStateWarning, "Unit custom-recovery.service is activating (start); incident resolves after 1s in this state")
+	assertDeferredSystemdItem(t, updates, "services.custom-recovery.service", montray.ItemStateWarning, "Unit custom-recovery.service is activating (start); incident resolves after 1s in this state")
 	assertSystemdUpdateError(t, updates, "configured-state barrier")
 	mockClock.Add(time.Second)
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.custom-recovery.service", salmon.ItemStateOK)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.custom-recovery.service", montray.ItemStateOK)
 }
 
 func TestCollectorResolvePolicyDisallowedOKStateResetsTimer(t *testing.T) {
@@ -267,14 +267,14 @@ func TestCollectorResolvePolicyDisallowedOKStateResetsTimer(t *testing.T) {
 			Conditions: []systemd.ConfigCondition{
 				{
 					SubStateContains: "auto-restart",
-					Result:           salmon.ItemStateWarning,
+					Result:           montray.ItemStateWarning,
 					Resolve: &systemd.ConfigResolve{
 						After:  5 * time.Second,
 						States: []systemd.UnitState{"active"},
 					},
 				},
-				{State: "active", Result: salmon.ItemStateOK},
-				{State: "activating", Result: salmon.ItemStateOK},
+				{State: "active", Result: montray.ItemStateOK},
+				{State: "activating", Result: montray.ItemStateOK},
 			},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
@@ -288,11 +288,11 @@ func TestCollectorResolvePolicyDisallowedOKStateResetsTimer(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	provider.updates <- systemdUnitUpdate("reset-recovery.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.reset-recovery.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.reset-recovery.service", montray.ItemStateWarning)
 
 	provider.updates <- systemdUnitUpdate("reset-recovery.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("first allowed-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", salmon.ItemStateWarning, "Unit reset-recovery.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", montray.ItemStateWarning, "Unit reset-recovery.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "first allowed-state barrier")
 	mockClock.Add(3 * time.Second)
 
@@ -301,19 +301,19 @@ func TestCollectorResolvePolicyDisallowedOKStateResetsTimer(t *testing.T) {
 	// incident or allowing that timer to finish in the background.
 	provider.updates <- systemdUnitUpdate("reset-recovery.service", "activating", "start")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("disallowed-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", salmon.ItemStateWarning, `Unit reset-recovery.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active])`)
+	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", montray.ItemStateWarning, `Unit reset-recovery.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active])`)
 	assertSystemdUpdateError(t, updates, "disallowed-state barrier")
 	mockClock.Add(5 * time.Second)
 	assertNoSystemdUpdate(t, updates)
 
 	provider.updates <- systemdUnitUpdate("reset-recovery.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("second allowed-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", salmon.ItemStateWarning, "Unit reset-recovery.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.reset-recovery.service", montray.ItemStateWarning, "Unit reset-recovery.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "second allowed-state barrier")
 	mockClock.Add(4 * time.Second)
 	assertNoSystemdUpdate(t, updates)
 	mockClock.Add(time.Second)
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.reset-recovery.service", salmon.ItemStateOK)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.reset-recovery.service", montray.ItemStateOK)
 }
 
 func TestCollectorLogsStateChangesWhileResolutionIsDeferred(t *testing.T) {
@@ -333,14 +333,14 @@ func TestCollectorLogsStateChangesWhileResolutionIsDeferred(t *testing.T) {
 			Conditions: []systemd.ConfigCondition{
 				{
 					SubStateContains: "auto-restart",
-					Result:           salmon.ItemStateWarning,
+					Result:           montray.ItemStateWarning,
 					Resolve: &systemd.ConfigResolve{
 						After:  5 * time.Second,
 						States: []systemd.UnitState{"active"},
 					},
 				},
-				{State: "active", Result: salmon.ItemStateOK},
-				{State: "activating", Result: salmon.ItemStateOK},
+				{State: "active", Result: montray.ItemStateOK},
+				{State: "activating", Result: montray.ItemStateOK},
 			},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
@@ -354,20 +354,20 @@ func TestCollectorLogsStateChangesWhileResolutionIsDeferred(t *testing.T) {
 	t.Cleanup(collector.Close)
 
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "auto-restart")
-	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", salmon.ItemStateWarning)
+	assertSystemdItem(t, receiveSystemdUpdate(t, updates), "services.flapping.service", montray.ItemStateWarning)
 
 	// This state is OK under the general rule, but it is not an allowed recovery
 	// state for the incident, so the log should explain why it remains active.
 	provider.updates <- systemdUnitUpdate("flapping.service", "activating", "start")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("disallowed-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, `Unit flapping.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active])`)
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, `Unit flapping.service is activating (start); incident remains unresolved: state "activating" does not contribute to recovery (resolve.states: [active])`)
 	assertSystemdUpdateError(t, updates, "disallowed-state barrier")
 
 	// Entering an allowed recovery state starts the timer and should log the
 	// current systemd state and the recovery requirement.
 	provider.updates <- systemdUnitUpdate("flapping.service", "active", "running")
 	provider.updates <- &systemd.UnitUpdate{Err: errors.New("allowed-state barrier")}
-	assertDeferredSystemdItem(t, updates, "services.flapping.service", salmon.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
+	assertDeferredSystemdItem(t, updates, "services.flapping.service", montray.ItemStateWarning, "Unit flapping.service is active (running); incident resolves after 5s in this state")
 	assertSystemdUpdateError(t, updates, "allowed-state barrier")
 
 	// Repeating the identical state may result from another DBus property update;
@@ -419,7 +419,7 @@ func TestCollectorDefaultsUnmatchedConditionToError(t *testing.T) {
 		Common: collectors.Params{ID: "services", Logger: testLogger, UpdatesChan: updates},
 		Config: systemd.Config{UnitRules: []systemd.ConfigUnitRule{{
 			Names:      []string{"unmatched.service"},
-			Conditions: []systemd.ConfigCondition{{State: "active", Result: salmon.ItemStateOK}},
+			Conditions: []systemd.ConfigCondition{{State: "active", Result: montray.ItemStateOK}},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
 			provider = &controlledProvider{updates: params.UnitUpdatesChan, closed: make(chan struct{})}
@@ -435,7 +435,7 @@ func TestCollectorDefaultsUnmatchedConditionToError(t *testing.T) {
 		"unmatched.service": {Name: "unmatched.service", State: "inactive"},
 	}}
 	update := receiveSystemdUpdate(t, updates)
-	assertSystemdItem(t, update, "services.unmatched.service", salmon.ItemStateError)
+	assertSystemdItem(t, update, "services.unmatched.service", montray.ItemStateError)
 	assertSystemdDetails(t, update, "services.unmatched.service", "Unit unmatched.service is inactive")
 }
 
@@ -468,7 +468,7 @@ func TestCollectorRejectsBothSubStateMatchersBeforeStartingProvider(t *testing.T
 			Conditions: []systemd.ConfigCondition{{
 				SubState:         "auto-restart",
 				SubStateContains: "auto-restart",
-				Result:           salmon.ItemStateWarning,
+				Result:           montray.ItemStateWarning,
 			}},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
@@ -492,27 +492,27 @@ func TestCollectorRejectsInvalidResolveBeforeStartingProvider(t *testing.T) {
 	}{
 		{
 			name:      "negative",
-			condition: systemd.ConfigCondition{Result: salmon.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: -time.Second, States: []systemd.UnitState{"active"}}},
+			condition: systemd.ConfigCondition{Result: montray.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: -time.Second, States: []systemd.UnitState{"active"}}},
 			want:      "resolve.after must be positive",
 		},
 		{
 			name:      "no states",
-			condition: systemd.ConfigCondition{Result: salmon.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second}},
+			condition: systemd.ConfigCondition{Result: montray.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second}},
 			want:      "resolve.states must not be empty",
 		},
 		{
 			name:      "empty state",
-			condition: systemd.ConfigCondition{Result: salmon.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active", ""}}},
+			condition: systemd.ConfigCondition{Result: montray.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active", ""}}},
 			want:      "resolve state #1 must not be empty",
 		},
 		{
 			name:      "duplicate state",
-			condition: systemd.ConfigCondition{Result: salmon.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active", "active"}}},
+			condition: systemd.ConfigCondition{Result: montray.ItemStateWarning, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active", "active"}}},
 			want:      "resolve contains duplicate state",
 		},
 		{
 			name:      "ok result",
-			condition: systemd.ConfigCondition{Result: salmon.ItemStateOK, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active"}}},
+			condition: systemd.ConfigCondition{Result: montray.ItemStateOK, Resolve: &systemd.ConfigResolve{After: time.Second, States: []systemd.UnitState{"active"}}},
 			want:      "requires a non-OK result",
 		},
 	}
@@ -557,7 +557,7 @@ func TestCollectorRejectsInvalidNamesBeforeStartingProvider(t *testing.T) {
 				Common: collectors.Params{ID: "services", Logger: testLogger, UpdatesChan: make(chan *collectors.Update)},
 				Config: systemd.Config{UnitRules: []systemd.ConfigUnitRule{{
 					Names:      test.names,
-					Conditions: []systemd.ConfigCondition{{Result: salmon.ItemStateOK}},
+					Conditions: []systemd.ConfigCondition{{Result: montray.ItemStateOK}},
 				}}},
 				ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
 					providerCalled = true
@@ -595,7 +595,7 @@ func TestCollectorCloseCompletesWhileCoreOutputIsBlocked(t *testing.T) {
 	collector, err := systemd.NewCollector(systemd.CollectorParams{
 		Common: collectors.Params{ID: "services", Logger: testLogger, UpdatesChan: coreUpdates},
 		Config: systemd.Config{UnitRules: []systemd.ConfigUnitRule{{
-			Type: "service", Conditions: []systemd.ConfigCondition{{Result: salmon.ItemStateError}},
+			Type: "service", Conditions: []systemd.ConfigCondition{{Result: montray.ItemStateError}},
 		}}},
 		ProviderFactory: func(params systemd.ProviderParams) (systemd.Provider, error) {
 			provider = &controlledProvider{updates: params.UnitUpdatesChan, closed: make(chan struct{})}
@@ -646,7 +646,7 @@ func assertNoSystemdUpdate(t *testing.T, updates <-chan *collectors.Update) {
 	}
 }
 
-func assertDeferredSystemdItem(t *testing.T, updates <-chan *collectors.Update, key salmon.ItemKey, state salmon.ItemState, details string) {
+func assertDeferredSystemdItem(t *testing.T, updates <-chan *collectors.Update, key montray.ItemKey, state montray.ItemState, details string) {
 	t.Helper()
 	update := receiveSystemdUpdate(t, updates)
 	assertSystemdItem(t, update, key, state)
@@ -667,7 +667,7 @@ func systemdUnitUpdate(name string, state systemd.UnitState, subState string) *s
 	}}
 }
 
-func assertSystemdItem(t *testing.T, update *collectors.Update, key salmon.ItemKey, state salmon.ItemState) {
+func assertSystemdItem(t *testing.T, update *collectors.Update, key montray.ItemKey, state montray.ItemState) {
 	t.Helper()
 	item := update.Items[key]
 	if item == nil {
@@ -679,7 +679,7 @@ func assertSystemdItem(t *testing.T, update *collectors.Update, key salmon.ItemK
 	}
 }
 
-func assertSystemdDetails(t *testing.T, update *collectors.Update, key salmon.ItemKey, details string) {
+func assertSystemdDetails(t *testing.T, update *collectors.Update, key montray.ItemKey, details string) {
 	t.Helper()
 	item := update.Items[key]
 	if item == nil {

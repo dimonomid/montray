@@ -7,8 +7,8 @@ import (
 
 	"github.com/juju/errors"
 
-	"github.com/dimonomid/salmon/interror"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray/interror"
+	"github.com/dimonomid/montray/logs"
 )
 
 var (

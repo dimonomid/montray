@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/juju/errors"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
 )
 
 type wsEvent string
@@ -105,7 +105,7 @@ func (s *Webserver) wsRxLoop(conn *wsConn) (err error) {
 	}
 }
 
-func (s *Webserver) wsTxLoop(conn *wsConn, notifications <-chan *salmon.Notification) {
+func (s *Webserver) wsTxLoop(conn *wsConn, notifications <-chan *montray.Notification) {
 	defer func() {
 		conn.logger.Log(logs.Debug, "WebSocket subscriber %d send loop stopped", conn.subID)
 		s.unsubscribe(conn.subID)
@@ -114,9 +114,9 @@ func (s *Webserver) wsTxLoop(conn *wsConn, notifications <-chan *salmon.Notifica
 	initialItems := s.params.Common.ItemsBoard.Get()
 	if err := conn.conn.WriteJSON(wsTxMsg{
 		Event: wsEventOngoingIncidentsSnapshot,
-		Data: &salmon.Notification{
+		Data: &montray.Notification{
 			Time: time.Now(),
-			OngoingIncidents: salmon.OngoingIncidentsWDelta{
+			OngoingIncidents: montray.OngoingIncidentsWDelta{
 				Total: initialItems,
 			},
 		},

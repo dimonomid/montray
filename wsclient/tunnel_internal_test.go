@@ -9,18 +9,18 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray/logs"
 )
 
 func TestTunnelCommandBuildsSSHForward(t *testing.T) {
 	server := ConfigServer{
 		Addr: "127.0.0.1:41992",
 		Tunnel: &ConfigTunnel{SSH: &ConfigSSHTunnel{
-			Host:             "salmon.example.com",
+			Host:             "montray.example.com",
 			User:             "monitor",
 			Port:             2222,
-			RemoteSalmonAddr: "127.0.0.1:41990",
-			ExtraSSHArgs:     []string{"-i", "/etc/salmon-watch/key", "-J", "bastion.example.com"},
+			RemoteServerAddr: "127.0.0.1:41990",
+			ExtraSSHArgs:     []string{"-i", "/etc/montray/key", "-J", "bastion.example.com"},
 		}},
 	}
 
@@ -36,11 +36,11 @@ func TestTunnelCommandBuildsSSHForward(t *testing.T) {
 		"-o", "ServerAliveInterval=10",
 		"-o", "ServerAliveCountMax=3",
 		"-o", "PermitLocalCommand=yes",
-		"-o", "LocalCommand=echo SALMON_TUNNEL_READY",
+		"-o", "LocalCommand=echo MONTRAY_TUNNEL_READY",
 		"-p", "2222",
 		"-L", "127.0.0.1:41992:127.0.0.1:41990",
-		"-i", "/etc/salmon-watch/key", "-J", "bastion.example.com",
-		"monitor@salmon.example.com",
+		"-i", "/etc/montray/key", "-J", "bastion.example.com",
+		"monitor@montray.example.com",
 	}
 	if !reflect.DeepEqual(got.Command, want) || got.ReadinessProbeString != sshTunnelReadySignal {
 		t.Fatalf("command = %#v, want %#v", got, want)
@@ -51,7 +51,7 @@ func TestTunnelCommandDefaultsSSHPort(t *testing.T) {
 	command, err := TunnelCommand(ConfigServer{
 		Addr: "localhost:41992",
 		Tunnel: &ConfigTunnel{SSH: &ConfigSSHTunnel{
-			Host: "host", User: "user", RemoteSalmonAddr: "localhost:41990",
+			Host: "host", User: "user", RemoteServerAddr: "localhost:41990",
 		}},
 	})
 	if err != nil {

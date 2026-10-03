@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
-	"github.com/dimonomid/salmon/statestracker"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/statestracker"
 	"github.com/juju/errors"
 
 	"github.com/benbjohnson/clock"
@@ -28,7 +28,7 @@ type Combiner struct {
 	// changes concurrently.
 	internalTrackerMtx sync.Mutex
 
-	totalByID map[string][]*salmon.ItemWContext
+	totalByID map[string][]*montray.ItemWContext
 	totalMtx  sync.Mutex
 	// clients are retained so Close can stop every per-server connection.
 	clients []*WSClient
@@ -45,7 +45,7 @@ type CombinerParams struct {
 	Config Config
 	Logger *logs.Logger
 
-	OngoingIncidentsHandler func(notif *salmon.Notification)
+	OngoingIncidentsHandler func(notif *montray.Notification)
 
 	Clock          clock.Clock
 	ReconnectDelay time.Duration
@@ -70,7 +70,7 @@ func NewCombiner(params CombinerParams) (*Combiner, error) {
 	c := &Combiner{
 		params: params,
 
-		totalByID: map[string][]*salmon.ItemWContext{},
+		totalByID: map[string][]*montray.ItemWContext{},
 		closeDone: make(chan struct{}),
 	}
 
@@ -161,7 +161,7 @@ func allocateLoopbackAddress() (string, error) {
 	return address, nil
 }
 
-// Close stops all Salmon connections and waits for their combiner loops.
+// Close stops all Montray connections and waits for their combiner loops.
 func (c *Combiner) Close() {
 	c.closeOnce.Do(func() {
 		c.params.Logger.Log(logs.Info, "Shutting down")
@@ -177,17 +177,17 @@ func (c *Combiner) Close() {
 	})
 }
 
-func (c *Combiner) applyNotification(id string, notif *salmon.Notification) {
+func (c *Combiner) applyNotification(id string, notif *montray.Notification) {
 	c.totalMtx.Lock()
 	defer c.totalMtx.Unlock()
 
 	c.totalByID[id] = notif.OngoingIncidents.Total
 	total := c.combinedTotalLocked()
 
-	notifCombined := &salmon.Notification{
+	notifCombined := &montray.Notification{
 		Time: notif.Time,
 
-		OngoingIncidents: salmon.OngoingIncidentsWDelta{
+		OngoingIncidents: montray.OngoingIncidentsWDelta{
 			Total: total,
 
 			Added:   notif.OngoingIncidents.Added,
@@ -205,7 +205,7 @@ func (c *Combiner) applyNotification(id string, notif *salmon.Notification) {
 
 // combinedTotalLocked returns all cached server snapshots in stable server-ID
 // order. The caller must hold totalMtx.
-func (c *Combiner) combinedTotalLocked() []*salmon.ItemWContext {
+func (c *Combiner) combinedTotalLocked() []*montray.ItemWContext {
 	ids := make([]string, 0, len(c.totalByID))
 	fullLen := 0
 	for id, items := range c.totalByID {
@@ -215,7 +215,7 @@ func (c *Combiner) combinedTotalLocked() []*salmon.ItemWContext {
 
 	sort.Strings(ids)
 
-	total := make([]*salmon.ItemWContext, 0, fullLen)
+	total := make([]*montray.ItemWContext, 0, fullLen)
 	for _, id := range ids {
 		total = append(total, c.totalByID[id]...)
 	}
@@ -230,8 +230,8 @@ func (c *Combiner) markServerIncidentsStale(id string, eventTime time.Time) {
 	defer c.totalMtx.Unlock()
 
 	items := c.totalByID[id]
-	updated := make([]*salmon.ItemWContext, 0, len(items))
-	changedItems := make([]*salmon.ItemWContext, 0, len(items))
+	updated := make([]*montray.ItemWContext, 0, len(items))
+	changedItems := make([]*montray.ItemWContext, 0, len(items))
 	for _, item := range items {
 		if item == nil {
 			updated = append(updated, nil)
@@ -250,9 +250,9 @@ func (c *Combiner) markServerIncidentsStale(id string, eventTime time.Time) {
 
 	c.totalByID[id] = updated
 	if c.params.OngoingIncidentsHandler != nil {
-		c.params.OngoingIncidentsHandler(&salmon.Notification{
+		c.params.OngoingIncidentsHandler(&montray.Notification{
 			Time: eventTime,
-			OngoingIncidents: salmon.OngoingIncidentsWDelta{
+			OngoingIncidents: montray.OngoingIncidentsWDelta{
 				Total:   c.combinedTotalLocked(),
 				Updated: changedItems,
 			},
@@ -274,16 +274,16 @@ func (c *Combiner) ForgetStaleIncident(key string) bool {
 				continue
 			}
 
-			updated := make([]*salmon.ItemWContext, 0, len(items)-1)
+			updated := make([]*montray.ItemWContext, 0, len(items)-1)
 			updated = append(updated, items[:i]...)
 			updated = append(updated, items[i+1:]...)
 			c.totalByID[id] = updated
 
 			c.params.Logger.WithContext("server_id", id).Log(logs.Info, "Forgot stale incident %s", key)
 			if c.params.OngoingIncidentsHandler != nil {
-				c.params.OngoingIncidentsHandler(&salmon.Notification{
+				c.params.OngoingIncidentsHandler(&montray.Notification{
 					Time: c.params.Clock.Now(),
-					OngoingIncidents: salmon.OngoingIncidentsWDelta{
+					OngoingIncidents: montray.OngoingIncidentsWDelta{
 						Total: c.combinedTotalLocked(),
 					},
 				})
@@ -329,7 +329,7 @@ func (c *Combiner) applyServerEvent(id string, event ServerEvent) {
 		c.applyNotification(id, notif)
 
 	case ServerEventKindConnectionError:
-		c.applyInternalItem(salmon.ItemKey(fmt.Sprintf("internal.connection.%s", id)), event.ConnectionError)
+		c.applyInternalItem(montray.ItemKey(fmt.Sprintf("internal.connection.%s", id)), event.ConnectionError)
 
 	case ServerEventKindTunnel:
 		err := event.Tunnel.Error
@@ -342,7 +342,7 @@ func (c *Combiner) applyServerEvent(id string, event ServerEvent) {
 			}
 			c.markServerIncidentsStale(id, event.Tunnel.Time)
 		}
-		c.applyInternalItem(salmon.ItemKey(fmt.Sprintf("internal.tunnel.%s", id)), err)
+		c.applyInternalItem(montray.ItemKey(fmt.Sprintf("internal.tunnel.%s", id)), err)
 
 	default:
 		logger := c.params.Logger.WithContext("server_id", id)
@@ -350,15 +350,15 @@ func (c *Combiner) applyServerEvent(id string, event ServerEvent) {
 	}
 }
 
-func (c *Combiner) applyInternalItem(key salmon.ItemKey, err string) {
-	state := salmon.ItemStateOK
+func (c *Combiner) applyInternalItem(key montray.ItemKey, err string) {
+	state := montray.ItemStateOK
 	if err != "" {
-		state = salmon.ItemStateError
+		state = montray.ItemStateError
 	}
 
 	c.internalTrackerMtx.Lock()
-	notif := c.internalTracker.FeedItems(map[salmon.ItemKey]*salmon.Item{
-		key: &salmon.Item{
+	notif := c.internalTracker.FeedItems(map[montray.ItemKey]*montray.Item{
+		key: &montray.Item{
 			Key:     key,
 			State:   state,
 			Details: err,
@@ -374,15 +374,15 @@ func (c *Combiner) applyInternalItem(key salmon.ItemKey, err string) {
 	c.applyNotification(IDInternal, notif)
 }
 
-func getPrefixedNotif(notif *salmon.Notification, prefix string) (*salmon.Notification, error) {
+func getPrefixedNotif(notif *montray.Notification, prefix string) (*montray.Notification, error) {
 	if err := validateNotification(notif); err != nil {
 		return nil, err
 	}
 
-	return &salmon.Notification{
+	return &montray.Notification{
 		Time: notif.Time,
 
-		OngoingIncidents: salmon.OngoingIncidentsWDelta{
+		OngoingIncidents: montray.OngoingIncidentsWDelta{
 			Total: getPrefixedItems(notif.OngoingIncidents.Total, prefix),
 
 			Added:   getPrefixedItems(notif.OngoingIncidents.Added, prefix),
@@ -394,8 +394,8 @@ func getPrefixedNotif(notif *salmon.Notification, prefix string) (*salmon.Notifi
 	}, nil
 }
 
-func getPrefixedItems(items []*salmon.ItemWContext, prefix string) []*salmon.ItemWContext {
-	ret := make([]*salmon.ItemWContext, 0, len(items))
+func getPrefixedItems(items []*montray.ItemWContext, prefix string) []*montray.ItemWContext {
+	ret := make([]*montray.ItemWContext, 0, len(items))
 	for _, item := range items {
 		ret = append(ret, getPrefixedItem(item, prefix))
 	}
@@ -403,10 +403,10 @@ func getPrefixedItems(items []*salmon.ItemWContext, prefix string) []*salmon.Ite
 	return ret
 }
 
-func getPrefixedItem(item *salmon.ItemWContext, prefix string) *salmon.ItemWContext {
-	return &salmon.ItemWContext{
-		Item: salmon.Item{
-			Key:     salmon.ItemKey(prefix + "." + string(item.Key)),
+func getPrefixedItem(item *montray.ItemWContext, prefix string) *montray.ItemWContext {
+	return &montray.ItemWContext{
+		Item: montray.Item{
+			Key:     montray.ItemKey(prefix + "." + string(item.Key)),
 			State:   item.State,
 			Details: item.Details,
 		},

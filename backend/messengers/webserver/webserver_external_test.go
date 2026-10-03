@@ -16,11 +16,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/gorilla/websocket"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/backend/messengers"
-	server "github.com/dimonomid/salmon/backend/messengers/webserver"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/backend/messengers"
+	server "github.com/dimonomid/montray/backend/messengers/webserver"
+	"github.com/dimonomid/montray/logs"
 )
 
 var testLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})
@@ -32,8 +32,8 @@ type websocketEnvelope struct {
 
 func TestServerPublishesStatusSnapshotAndUpdates(t *testing.T) {
 	board := itemsboard.New()
-	initial := incident("disk.free", salmon.ItemStateError, "full")
-	board.Set([]*salmon.ItemWContext{initial})
+	initial := incident("disk.free", montray.ItemStateError, "full")
+	board.Set([]*montray.ItemWContext{initial})
 	webserver, notifications, done := startServer(t, board)
 
 	response, err := http.Get("http://" + webserver.Addr().String() + "/api/v1/status")
@@ -45,7 +45,7 @@ func TestServerPublishesStatusSnapshotAndUpdates(t *testing.T) {
 		t.Fatalf("status response = %s", response.Status)
 	}
 	var status struct {
-		OngoingIncidents []*salmon.ItemWContext `json:"ongoingIncidents"`
+		OngoingIncidents []*montray.ItemWContext `json:"ongoingIncidents"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&status); err != nil {
 		t.Fatal(err)
@@ -59,10 +59,10 @@ func TestServerPublishesStatusSnapshotAndUpdates(t *testing.T) {
 	}
 	assertNotificationTotal(t, initialMessage.Data, "disk.free")
 
-	update := &salmon.Notification{
+	update := &montray.Notification{
 		Time: time.Now(),
-		OngoingIncidents: salmon.OngoingIncidentsWDelta{
-			Total: []*salmon.ItemWContext{incident("systemd.sync", salmon.ItemStateWarning, "failed")},
+		OngoingIncidents: montray.OngoingIncidentsWDelta{
+			Total: []*montray.ItemWContext{incident("systemd.sync", montray.ItemStateWarning, "failed")},
 		},
 	}
 	notifications <- update
@@ -129,7 +129,7 @@ func TestServerClosesWebsocketWhenClientSendsMessage(t *testing.T) {
 
 func TestServerReportsBindFailure(t *testing.T) {
 	first, firstNotifications, firstDone := startServer(t, itemsboard.New())
-	notifications := make(chan *salmon.Notification)
+	notifications := make(chan *montray.Notification)
 	done := make(chan struct{})
 	_, err := server.New(server.Params{
 		Common: messengers.Params{Logger: testLogger, ItemsBoard: itemsboard.New(), NotificationsChan: notifications, TornDown: done},
@@ -223,8 +223,8 @@ func TestServerRequiresBearerTokenForEntireAPI(t *testing.T) {
 		Sinks: []logs.LoggerSinkParams{{Filepath: logPath, MinLevel: logs.Info}},
 	})
 	board := itemsboard.New()
-	board.Set([]*salmon.ItemWContext{incident("disk.free", salmon.ItemStateError, "full")})
-	notifications := make(chan *salmon.Notification)
+	board.Set([]*montray.ItemWContext{incident("disk.free", montray.ItemStateError, "full")})
+	notifications := make(chan *montray.Notification)
 	done := make(chan struct{})
 	webserver, err := server.New(server.Params{
 		Common: messengers.Params{Logger: logger, ItemsBoard: board, NotificationsChan: notifications, TornDown: done},
@@ -359,9 +359,9 @@ func TestServerShutdownRejectsConcurrentWebsocketSubscriptions(t *testing.T) {
 	}
 }
 
-func startServer(t *testing.T, board *itemsboard.ItemsBoard) (*server.Webserver, chan *salmon.Notification, chan struct{}) {
+func startServer(t *testing.T, board *itemsboard.ItemsBoard) (*server.Webserver, chan *montray.Notification, chan struct{}) {
 	t.Helper()
-	notifications := make(chan *salmon.Notification, 4)
+	notifications := make(chan *montray.Notification, 4)
 	done := make(chan struct{})
 	webserver, err := server.New(server.Params{
 		Common: messengers.Params{Logger: testLogger, ItemsBoard: board, NotificationsChan: notifications, TornDown: done},
@@ -395,14 +395,14 @@ func readEnvelope(t *testing.T, connection *websocket.Conn) websocketEnvelope {
 
 func assertNotificationTotal(t *testing.T, data json.RawMessage, keys ...string) {
 	t.Helper()
-	var notification salmon.Notification
+	var notification montray.Notification
 	if err := json.Unmarshal(data, &notification); err != nil {
 		t.Fatal(err)
 	}
 	assertIncidentKeys(t, notification.OngoingIncidents.Total, keys...)
 }
 
-func assertIncidentKeys(t *testing.T, incidents []*salmon.ItemWContext, keys ...string) {
+func assertIncidentKeys(t *testing.T, incidents []*montray.ItemWContext, keys ...string) {
 	t.Helper()
 	got := make([]string, 0, len(incidents))
 	for _, value := range incidents {
@@ -413,6 +413,6 @@ func assertIncidentKeys(t *testing.T, incidents []*salmon.ItemWContext, keys ...
 	}
 }
 
-func incident(key salmon.ItemKey, state salmon.ItemState, details string) *salmon.ItemWContext {
-	return &salmon.ItemWContext{Item: salmon.Item{Key: key, State: state, Details: details}, IncidentStartedAt: time.Now()}
+func incident(key montray.ItemKey, state montray.ItemState, details string) *montray.ItemWContext {
+	return &montray.ItemWContext{Item: montray.Item{Key: key, State: state, Details: details}, IncidentStartedAt: time.Now()}
 }

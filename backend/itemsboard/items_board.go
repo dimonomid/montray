@@ -3,11 +3,11 @@ package itemsboard
 import (
 	"sync"
 
-	"github.com/dimonomid/salmon"
+	"github.com/dimonomid/montray"
 )
 
 type ItemsBoard struct {
-	items []*salmon.ItemWContext
+	items []*montray.ItemWContext
 
 	mtx sync.RWMutex
 }
@@ -16,14 +16,14 @@ func New() *ItemsBoard {
 	return &ItemsBoard{}
 }
 
-func (ib *ItemsBoard) Set(items []*salmon.ItemWContext) {
+func (ib *ItemsBoard) Set(items []*montray.ItemWContext) {
 	ib.mtx.Lock()
 	defer ib.mtx.Unlock()
 
 	ib.items = items
 }
 
-func (ib *ItemsBoard) Get() []*salmon.ItemWContext {
+func (ib *ItemsBoard) Get() []*montray.ItemWContext {
 	ib.mtx.RLock()
 	defer ib.mtx.RUnlock()
 

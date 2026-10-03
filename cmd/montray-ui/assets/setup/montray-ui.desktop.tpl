@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Montray
+Comment=Show Montray status in the desktop tray
+Icon=montray-ui
+X-Montray-Desktop-Entry-Version=2
+Exec={{EXEC}}
+Terminal=false

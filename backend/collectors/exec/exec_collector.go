@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/collectors"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/collectors"
+	"github.com/dimonomid/montray/logs"
 	"github.com/juju/errors"
 )
 
@@ -89,8 +89,8 @@ func NewCollector(params CollectorParams) (*Collector, error) {
 	params.Common.Logger = params.Common.Logger.WithNamespaceAppended("ExecCollector")
 	if params.Config.Conditions == nil {
 		params.Config.Conditions = []ConfigCondition{
-			{ExitCode: "0", Result: salmon.ItemStateOK},
-			{Result: salmon.ItemStateError},
+			{ExitCode: "0", Result: montray.ItemStateOK},
+			{Result: montray.ItemStateError},
 		}
 	}
 	applyConfigDefaults(&params.Config)
@@ -155,7 +155,7 @@ func validateConfig(config Config) error {
 				return fmt.Errorf("condition #%d has invalid exitCode %q", i, condition.ExitCode)
 			}
 		}
-		if !salmon.IsItemStateValid(condition.Result) {
+		if !montray.IsItemStateValid(condition.Result) {
 			return fmt.Errorf("condition #%d has invalid result %q", i, condition.Result)
 		}
 	}
@@ -170,8 +170,8 @@ func (c *Collector) Close() {
 	<-c.torndown
 }
 
-func (c *Collector) getItemKey(key string) salmon.ItemKey {
-	return salmon.ItemKey(c.params.Common.ID + "." + key)
+func (c *Collector) getItemKey(key string) montray.ItemKey {
+	return montray.ItemKey(c.params.Common.ID + "." + key)
 }
 
 func (c *Collector) run() {
@@ -182,13 +182,13 @@ func (c *Collector) run() {
 	defer tickerNormal.Stop()
 	defer tickerWhenUnhealthy.Stop()
 
-	var lastItemResult *salmon.Item
+	var lastItemResult *montray.Item
 
 	runAndHandle := func() bool {
 		itemResult := c.runCommand()
 
 		update := &collectors.Update{
-			Items: map[salmon.ItemKey]*salmon.Item{
+			Items: map[montray.ItemKey]*montray.Item{
 				itemResult.Key: itemResult,
 			},
 		}
@@ -210,7 +210,7 @@ func (c *Collector) run() {
 	for {
 
 		ticker := tickerNormal
-		if lastItemResult.State != salmon.ItemStateOK {
+		if lastItemResult.State != montray.ItemStateOK {
 			ticker = tickerWhenUnhealthy
 		}
 
@@ -226,8 +226,8 @@ func (c *Collector) run() {
 	}
 }
 
-func (c *Collector) runCommand() *salmon.Item {
-	ret := &salmon.Item{
+func (c *Collector) runCommand() *montray.Item {
+	ret := &montray.Item{
 		Key: c.getItemKey("exec_result"),
 
 		// State will be populated below. Details starts with the configured
@@ -245,12 +245,12 @@ func (c *Collector) runCommand() *salmon.Item {
 	// buffering all of its output in memory.
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		ret.State = salmon.ItemStateError
+		ret.State = montray.ItemStateError
 		ret.Details = appendDetails(ret.Details, errors.Annotatef(err, "failed to capture command output").Error())
 		return ret
 	}
 	if err := cmd.Start(); err != nil {
-		ret.State = salmon.ItemStateError
+		ret.State = montray.ItemStateError
 		ret.Details = appendDetails(ret.Details, errors.Annotatef(err, "failed to start command").Error())
 		return ret
 	}
@@ -274,12 +274,12 @@ func (c *Collector) runCommand() *salmon.Item {
 	err = cmd.Wait()
 	if err != nil {
 		if commandCtx.Err() == context.DeadlineExceeded {
-			ret.State = salmon.ItemStateError
+			ret.State = montray.ItemStateError
 			ret.Details = appendDetails(ret.Details, fmt.Sprintf("Command timed out after %s", c.params.Config.Timeout))
 			return ret
 		}
 		if c.ctx.Err() != nil {
-			ret.State = salmon.ItemStateError
+			ret.State = montray.ItemStateError
 			ret.Details = appendDetails(ret.Details, "command was canceled: "+c.ctx.Err().Error())
 			return ret
 		}
@@ -291,7 +291,7 @@ func (c *Collector) runCommand() *salmon.Item {
 		} else {
 			// Apparently the error is something else, like IO issues; so file it
 			// as an error.
-			ret.State = salmon.ItemStateError
+			ret.State = montray.ItemStateError
 			ret.Details = appendDetails(ret.Details, errors.Annotatef(err, "failed to run command").Error())
 			return ret
 		}
@@ -313,7 +313,7 @@ func (c *Collector) runCommand() *salmon.Item {
 
 	// If no condition matched, assume error
 	if ret.State == "" {
-		ret.State = salmon.ItemStateError
+		ret.State = montray.ItemStateError
 		c.params.Common.Logger.Log(logs.Warning, "Command exited with code %s; no condition matched, assuming error",
 			exitCodeStr)
 	}

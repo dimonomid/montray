@@ -1,3 +1,3 @@
-// Package setup contains shared helpers for Salmon's command-line setup
+// Package setup contains shared helpers for Montray's command-line setup
 // commands.
 package setup

@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
 
 	"github.com/gorilla/websocket"
 )
@@ -26,7 +26,7 @@ type wsMsgServer struct {
 
 const (
 	// maxServerMessageBytes bounds memory used to receive a single message from
-	// a Salmon server. Heartbeats and incident notifications are expected to be
+	// a Montray server. Heartbeats and incident notifications are expected to be
 	// much smaller than this.
 	maxServerMessageBytes = 1 << 20
 
@@ -34,7 +34,7 @@ const (
 	heartbeatPeriod = 10 * time.Second
 
 	// maxNumHeartbeatPeriodsUntilDisconnect is how many heartbeat periods may
-	// pass before a silent Salmon connection, or its SSH tunnel, is considered
+	// pass before a silent Montray connection, or its SSH tunnel, is considered
 	// dead.
 	maxNumHeartbeatPeriodsUntilDisconnect = 3
 
@@ -47,7 +47,7 @@ const (
 	// error are observed in the opposite order. Without this delay, the
 	// WebSocket error could briefly be reported as a separate connection
 	// incident. We cannot wait indefinitely for the tunnel to fail because the
-	// same WebSocket error can be caused by Salmon becoming unavailable while
+	// same WebSocket error can be caused by Montray becoming unavailable while
 	// the tunnel process remains healthy.
 	tunnelFailureSettleDelay = 50 * time.Millisecond
 
@@ -121,7 +121,7 @@ type ServerEvent struct {
 	// Kind identifies the event payload.
 	Kind ServerEventKind
 	// OngoingIncidents contains the notification for an incident event.
-	OngoingIncidents *salmon.Notification
+	OngoingIncidents *montray.Notification
 	// ConnectionError contains the current error for a connection-error event;
 	// an empty value resolves the corresponding internal incident.
 	ConnectionError string
@@ -140,7 +140,7 @@ const (
 	EventKindHeartbeat    ConnectionEventKind = "heartbeat"
 )
 
-// ConnectionEvent describes a Salmon connection transition or heartbeat.
+// ConnectionEvent describes a Montray connection transition or heartbeat.
 type ConnectionEvent struct {
 	EventKind ConnectionEventKind
 	Time      time.Time
@@ -391,7 +391,7 @@ mainLoop:
 
 				switch msgServer.Event {
 				case "OngoingIncidentsSnapshot", "OngoingIncidentsUpdate":
-					var notif *salmon.Notification
+					var notif *montray.Notification
 
 					if err := json.Unmarshal(msgServer.Data, &notif); err != nil {
 						disconnectWithError(fmt.Errorf("decoding %s data: %w", msgServer.Event, err))
@@ -485,7 +485,7 @@ func (c *WSClient) tunnelUnavailable() bool {
 	}
 }
 
-func validateNotification(notif *salmon.Notification) error {
+func validateNotification(notif *montray.Notification) error {
 	if notif == nil {
 		return fmt.Errorf("notification is null")
 	}
@@ -495,7 +495,7 @@ func validateNotification(notif *salmon.Notification) error {
 
 	lists := []struct {
 		name  string
-		items []*salmon.ItemWContext
+		items []*montray.ItemWContext
 	}{
 		{name: "total", items: notif.OngoingIncidents.Total},
 		{name: "added", items: notif.OngoingIncidents.Added},
@@ -511,7 +511,7 @@ func validateNotification(notif *salmon.Notification) error {
 			if item.Key == "" {
 				return fmt.Errorf("%s.key is empty", field)
 			}
-			if !salmon.IsItemStateValid(item.State) {
+			if !montray.IsItemStateValid(item.State) {
 				return fmt.Errorf("%s.state %q is invalid", field, item.State)
 			}
 		}
@@ -520,7 +520,7 @@ func validateNotification(notif *salmon.Notification) error {
 	return nil
 }
 
-func (c *WSClient) sendOngoingIncidents(notif *salmon.Notification) bool {
+func (c *WSClient) sendOngoingIncidents(notif *montray.Notification) bool {
 	return c.sendServerEvent(ServerEvent{
 		Kind:             ServerEventKindOngoingIncidents,
 		OngoingIncidents: notif,

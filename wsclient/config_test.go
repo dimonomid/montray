@@ -4,7 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimonomid/salmon/wsclient"
+	"github.com/dimonomid/montray/wsclient"
+	"gopkg.in/yaml.v2"
 )
 
 func TestConfigValidateServerIDs(t *testing.T) {
@@ -53,10 +54,67 @@ func TestNewCombinerRejectsInvalidServerID(t *testing.T) {
 	}
 }
 
+func TestConfigAcceptsLegacyRemoteSalmonAddrKey(t *testing.T) {
+	var config struct {
+		WSClient wsclient.Config `yaml:"wsClient"`
+	}
+	err := yaml.UnmarshalStrict([]byte(`wsClient:
+  servers:
+    - id: remote
+      addr: localhost:42990
+      tunnel:
+        ssh:
+          host: example.com
+          user: monitor
+          remoteSalmonAddr: localhost:41990
+`), &config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := config.WSClient.Servers[0].Tunnel.SSH.RemoteServerAddr; got != "localhost:41990" {
+		t.Fatalf("remote server address = %q, want legacy value", got)
+	}
+}
+
+func TestConfigSSHTunnelCompatibilityRemainsStrict(t *testing.T) {
+	for name, yamlText := range map[string]string{
+		"unknown key": `wsClient:
+  servers:
+    - id: remote
+      addr: localhost:42990
+      tunnel:
+        ssh:
+          host: example.com
+          user: monitor
+          remoteServerAdress: localhost:41990
+`,
+		"both spellings": `wsClient:
+  servers:
+    - id: remote
+      addr: localhost:42990
+      tunnel:
+        ssh:
+          host: example.com
+          user: monitor
+          remoteServerAddr: localhost:41990
+          remoteSalmonAddr: localhost:41990
+`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var config struct {
+				WSClient wsclient.Config `yaml:"wsClient"`
+			}
+			if err := yaml.UnmarshalStrict([]byte(yamlText), &config); err == nil {
+				t.Fatal("invalid SSH compatibility configuration was accepted")
+			}
+		})
+	}
+}
+
 func TestConfigValidateTunnels(t *testing.T) {
 	validSSH := func() *wsclient.ConfigTunnel {
 		return &wsclient.ConfigTunnel{SSH: &wsclient.ConfigSSHTunnel{
-			Host: "example.com", User: "salmon", RemoteSalmonAddr: "127.0.0.1:41990",
+			Host: "example.com", User: "montray", RemoteServerAddr: "127.0.0.1:41990",
 		}}
 	}
 	tests := []struct {
@@ -115,21 +173,21 @@ func TestConfigValidateTunnels(t *testing.T) {
 		{
 			name: "missing SSH host",
 			server: wsclient.ConfigServer{ID: "remote", Addr: "localhost:41992", Tunnel: &wsclient.ConfigTunnel{SSH: &wsclient.ConfigSSHTunnel{
-				User: "salmon", RemoteSalmonAddr: "localhost:41990",
+				User: "montray", RemoteServerAddr: "localhost:41990",
 			}}},
 			wantErr: ".ssh.host is required",
 		},
 		{
 			name: "missing SSH user",
 			server: wsclient.ConfigServer{ID: "remote", Addr: "localhost:41992", Tunnel: &wsclient.ConfigTunnel{SSH: &wsclient.ConfigSSHTunnel{
-				Host: "example.com", RemoteSalmonAddr: "localhost:41990",
+				Host: "example.com", RemoteServerAddr: "localhost:41990",
 			}}},
 			wantErr: ".ssh.user is required",
 		},
 		{
 			name: "invalid SSH port",
 			server: wsclient.ConfigServer{ID: "remote", Addr: "localhost:41992", Tunnel: &wsclient.ConfigTunnel{SSH: &wsclient.ConfigSSHTunnel{
-				Host: "example.com", User: "salmon", Port: 65536, RemoteSalmonAddr: "localhost:41990",
+				Host: "example.com", User: "montray", Port: 65536, RemoteServerAddr: "localhost:41990",
 			}}},
 			wantErr: ".ssh.port",
 		},
@@ -139,11 +197,11 @@ func TestConfigValidateTunnels(t *testing.T) {
 			wantErr: "must use a loopback host",
 		},
 		{
-			name: "invalid remote Salmon address",
+			name: "invalid remote Montray address",
 			server: wsclient.ConfigServer{ID: "remote", Addr: "localhost:41992", Tunnel: &wsclient.ConfigTunnel{SSH: &wsclient.ConfigSSHTunnel{
-				Host: "example.com", User: "salmon", RemoteSalmonAddr: "missing-port",
+				Host: "example.com", User: "montray", RemoteServerAddr: "missing-port",
 			}}},
-			wantErr: "remoteSalmonAddr",
+			wantErr: "remoteServerAddr",
 		},
 	}
 
@@ -171,7 +229,7 @@ func TestConfigValidateBearerAuth(t *testing.T) {
 	}{
 		{
 			name:   "TLS",
-			server: wsclient.ConfigServer{ID: "remote", Addr: "salmon.example.com:41990", TLS: &wsclient.ConfigTLS{}, Auth: &wsclient.ConfigAuth{BearerTokenFile: "/tmp/token"}},
+			server: wsclient.ConfigServer{ID: "remote", Addr: "montray.example.com:41990", TLS: &wsclient.ConfigTLS{}, Auth: &wsclient.ConfigAuth{BearerTokenFile: "/tmp/token"}},
 		},
 		{
 			name:   "loopback plaintext",
@@ -179,11 +237,11 @@ func TestConfigValidateBearerAuth(t *testing.T) {
 		},
 		{
 			name:   "remote plaintext",
-			server: wsclient.ConfigServer{ID: "remote", Addr: "salmon.example.com:41990", Auth: &wsclient.ConfigAuth{BearerTokenFile: "/tmp/token"}},
+			server: wsclient.ConfigServer{ID: "remote", Addr: "montray.example.com:41990", Auth: &wsclient.ConfigAuth{BearerTokenFile: "/tmp/token"}},
 		},
 		{
 			name:    "missing token file",
-			server:  wsclient.ConfigServer{ID: "remote", Addr: "salmon.example.com:41990", TLS: &wsclient.ConfigTLS{}, Auth: &wsclient.ConfigAuth{}},
+			server:  wsclient.ConfigServer{ID: "remote", Addr: "montray.example.com:41990", TLS: &wsclient.ConfigTLS{}, Auth: &wsclient.ConfigAuth{}},
 			wantErr: "auth.bearerTokenFile is required",
 		},
 	}

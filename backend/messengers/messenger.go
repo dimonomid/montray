@@ -1,9 +1,9 @@
 package messengers
 
 import (
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/logs"
 )
 
 type Messenger interface {
@@ -23,7 +23,7 @@ type Params struct {
 	// NotificationsChan is where the Messenger will get notifications from. Once
 	// it's closed, the Messenger should tear itself down, and after that it
 	// closes the TornDown channel below.
-	NotificationsChan <-chan *salmon.Notification
+	NotificationsChan <-chan *montray.Notification
 
 	// TornDown is closed by the Messenger when it has been torn down completely.
 	TornDown chan<- struct{}

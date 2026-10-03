@@ -7,9 +7,9 @@ func TestShellArgument(t *testing.T) {
 		argument string
 		want     string
 	}{
-		{"salmon-watch", "salmon-watch"},
+		{"montray", "montray"},
 		{"/tmp/my config.yml", "'/tmp/my config.yml'"},
-		{"$HOME/salmon.yml", "'$HOME/salmon.yml'"},
+		{"$HOME/montray.yml", "'$HOME/montray.yml'"},
 		{"it's.yml", "'it'\"'\"'s.yml'"},
 		{"", "''"},
 	} {

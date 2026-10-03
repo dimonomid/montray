@@ -8,7 +8,7 @@ import (
 )
 
 func TestEnsureFileDoesNotOverwriteExistingFile(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "etc", "salmon.yml")
+	path := filepath.Join(t.TempDir(), "etc", "montray.yml")
 	created, err := EnsureFile(path, "first\n")
 	if err != nil || !created {
 		t.Fatalf("EnsureFile() = (%v, %v), want (true, nil)", created, err)
@@ -29,8 +29,8 @@ func TestEnsureFileDoesNotOverwriteExistingFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(entries) != 1 || entries[0].Name() != "salmon.yml" {
-		t.Fatalf("directory entries = %#v, want only salmon.yml", entries)
+	if len(entries) != 1 || entries[0].Name() != "montray.yml" {
+		t.Fatalf("directory entries = %#v, want only montray.yml", entries)
 	}
 }
 

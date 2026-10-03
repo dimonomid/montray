@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
 )
 
 func TestBoardPublishesLatestSnapshot(t *testing.T) {
@@ -14,8 +14,8 @@ func TestBoardPublishesLatestSnapshot(t *testing.T) {
 		t.Fatalf("new board contains %#v", got)
 	}
 
-	want := []*salmon.ItemWContext{{
-		Item:              salmon.Item{Key: "disk.free", State: salmon.ItemStateError, Details: "full"},
+	want := []*montray.ItemWContext{{
+		Item:              montray.Item{Key: "disk.free", State: montray.ItemStateError, Details: "full"},
 		IncidentStartedAt: time.Unix(123, 0),
 	}}
 	board.Set(want)

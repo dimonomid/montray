@@ -10,7 +10,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/gorilla/websocket"
 
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray/logs"
 )
 
 func TestWSClientWaitsForTunnelReadiness(t *testing.T) {

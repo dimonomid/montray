@@ -3,12 +3,12 @@ package core
 import (
 	"fmt"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/backend/itemsboard"
-	"github.com/dimonomid/salmon/backend/messengers"
-	"github.com/dimonomid/salmon/backend/messengers/filelogger"
-	"github.com/dimonomid/salmon/backend/messengers/webserver"
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/backend/messengers"
+	"github.com/dimonomid/montray/backend/messengers/filelogger"
+	"github.com/dimonomid/montray/backend/messengers/webserver"
+	"github.com/dimonomid/montray/logs"
 )
 
 // messengerWCtx contains the messenger and its context (e.g. channels for that
@@ -17,7 +17,7 @@ type messengerWCtx struct {
 	messenger messengers.Messenger
 	logger    *logs.Logger
 
-	notificationsChan chan *salmon.Notification
+	notificationsChan chan *montray.Notification
 	tornDown          chan struct{}
 }
 
@@ -68,7 +68,7 @@ func createMessengers(cfgs []Messenger, ib *itemsboard.ItemsBoard, logger *logs.
 	for i, cfg := range cfgs {
 		messengerLogger := logger.WithContext("messenger_index", fmt.Sprintf("%d", i))
 		mwCtx := messengerWCtx{
-			notificationsChan: make(chan *salmon.Notification, 32),
+			notificationsChan: make(chan *montray.Notification, 32),
 			tornDown:          make(chan struct{}),
 			logger:            messengerLogger,
 		}

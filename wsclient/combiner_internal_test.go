@@ -9,15 +9,15 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/salmon"
-	"github.com/dimonomid/salmon/logs"
-	"github.com/dimonomid/salmon/statestracker"
+	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/statestracker"
 )
 
 func TestResolveTunnelAddressesAllocatesOmittedAddress(t *testing.T) {
 	config := Config{Servers: []ConfigServer{
 		{ID: "automatic", Tunnel: &ConfigTunnel{SSH: &ConfigSSHTunnel{
-			Host: "example.com", User: "salmon", RemoteSalmonAddr: "127.0.0.1:41990",
+			Host: "example.com", User: "montray", RemoteServerAddr: "127.0.0.1:41990",
 		}}},
 		{ID: "explicit", Addr: "localhost:41992"},
 	}}
@@ -61,15 +61,15 @@ func containsString(values []string, want string) bool {
 	return false
 }
 
-func combinerTestIncident(key string, stale bool) *salmon.ItemWContext {
-	return &salmon.ItemWContext{
-		Item:  salmon.Item{Key: salmon.ItemKey(key), State: salmon.ItemStateError},
+func combinerTestIncident(key string, stale bool) *montray.ItemWContext {
+	return &montray.ItemWContext{
+		Item:  montray.Item{Key: montray.ItemKey(key), State: montray.ItemStateError},
 		Stale: stale,
 	}
 }
 
 // incidentWithKey finds an incident in a combined snapshot by its prefixed key.
-func incidentWithKey(items []*salmon.ItemWContext, key string) *salmon.ItemWContext {
+func incidentWithKey(items []*montray.ItemWContext, key string) *montray.ItemWContext {
 	for _, item := range items {
 		if item != nil && string(item.Key) == key {
 			return item
@@ -79,12 +79,12 @@ func incidentWithKey(items []*salmon.ItemWContext, key string) *salmon.ItemWCont
 }
 
 func TestCombinerMarksOnlyDisconnectedServerIncidentsStale(t *testing.T) {
-	var notifications []*salmon.Notification
+	var notifications []*montray.Notification
 	combiner := &Combiner{
-		params: CombinerParams{OngoingIncidentsHandler: func(notification *salmon.Notification) {
+		params: CombinerParams{OngoingIncidentsHandler: func(notification *montray.Notification) {
 			notifications = append(notifications, notification)
 		}},
-		totalByID: map[string][]*salmon.ItemWContext{
+		totalByID: map[string][]*montray.ItemWContext{
 			"first":  {combinerTestIncident("first.disk", false)},
 			"second": {combinerTestIncident("second.cpu", false)},
 		},
@@ -120,19 +120,19 @@ func TestCombinerMarksOnlyDisconnectedServerIncidentsStale(t *testing.T) {
 }
 
 func TestCombinerSourceSnapshotReplacesStaleIncidents(t *testing.T) {
-	var latest *salmon.Notification
+	var latest *montray.Notification
 	combiner := &Combiner{
-		params: CombinerParams{OngoingIncidentsHandler: func(notification *salmon.Notification) {
+		params: CombinerParams{OngoingIncidentsHandler: func(notification *montray.Notification) {
 			latest = notification
 		}},
-		totalByID: map[string][]*salmon.ItemWContext{
+		totalByID: map[string][]*montray.ItemWContext{
 			"first":  {combinerTestIncident("first.disk", true)},
 			"second": {combinerTestIncident("second.cpu", true)},
 		},
 	}
 
-	combiner.applyNotification("first", &salmon.Notification{OngoingIncidents: salmon.OngoingIncidentsWDelta{
-		Total: []*salmon.ItemWContext{combinerTestIncident("first.disk", false)},
+	combiner.applyNotification("first", &montray.Notification{OngoingIncidents: montray.OngoingIncidentsWDelta{
+		Total: []*montray.ItemWContext{combinerTestIncident("first.disk", false)},
 	}})
 	if incident := incidentWithKey(latest.OngoingIncidents.Total, "first.disk"); incident == nil || incident.Stale {
 		t.Fatalf("replacement first.disk = %#v, want non-stale", incident)
@@ -141,7 +141,7 @@ func TestCombinerSourceSnapshotReplacesStaleIncidents(t *testing.T) {
 		t.Fatalf("cached second.cpu = %#v, want stale", incident)
 	}
 
-	combiner.applyNotification("second", &salmon.Notification{})
+	combiner.applyNotification("second", &montray.Notification{})
 	if incident := incidentWithKey(latest.OngoingIncidents.Total, "second.cpu"); incident != nil {
 		t.Fatalf("empty source snapshot retained second.cpu: %#v", incident)
 	}
@@ -149,16 +149,16 @@ func TestCombinerSourceSnapshotReplacesStaleIncidents(t *testing.T) {
 
 func TestCombinerForgetsOnlyStaleIncidentWithoutResolutionDelta(t *testing.T) {
 	clk := clock.NewMock()
-	var notifications []*salmon.Notification
+	var notifications []*montray.Notification
 	combiner := &Combiner{
 		params: CombinerParams{
 			Clock:  clk,
 			Logger: logs.NewLogger(logs.LoggerParams{Clock: clk}),
-			OngoingIncidentsHandler: func(notification *salmon.Notification) {
+			OngoingIncidentsHandler: func(notification *montray.Notification) {
 				notifications = append(notifications, notification)
 			},
 		},
-		totalByID: map[string][]*salmon.ItemWContext{
+		totalByID: map[string][]*montray.ItemWContext{
 			"first": {
 				combinerTestIncident("first.stale", true),
 				combinerTestIncident("first.fresh", false),
@@ -197,8 +197,8 @@ func TestCombinerForgetsOnlyStaleIncidentWithoutResolutionDelta(t *testing.T) {
 		t.Fatalf("rejected forget published %d notifications, want 1", len(notifications))
 	}
 
-	combiner.applyNotification("first", &salmon.Notification{OngoingIncidents: salmon.OngoingIncidentsWDelta{
-		Total: []*salmon.ItemWContext{combinerTestIncident("first.stale", false)},
+	combiner.applyNotification("first", &montray.Notification{OngoingIncidents: montray.OngoingIncidentsWDelta{
+		Total: []*montray.ItemWContext{combinerTestIncident("first.stale", false)},
 	}})
 	if incident := incidentWithKey(notifications[len(notifications)-1].OngoingIncidents.Total, "first.stale"); incident == nil || incident.Stale {
 		t.Fatalf("source snapshot did not restore forgotten incident as fresh: %#v", incident)
@@ -213,8 +213,8 @@ func TestGetPrefixedItemPreservesStale(t *testing.T) {
 }
 
 func TestGetPrefixedNotifRejectsNullItem(t *testing.T) {
-	_, err := getPrefixedNotif(&salmon.Notification{OngoingIncidents: salmon.OngoingIncidentsWDelta{
-		Total: []*salmon.ItemWContext{nil},
+	_, err := getPrefixedNotif(&montray.Notification{OngoingIncidents: montray.OngoingIncidentsWDelta{
+		Total: []*montray.ItemWContext{nil},
 	}}, "server")
 	if err == nil {
 		t.Fatal("null incident was accepted")
@@ -222,7 +222,7 @@ func TestGetPrefixedNotifRejectsNullItem(t *testing.T) {
 }
 
 func TestCombinerReportsTunnelFailureAsInternalIncident(t *testing.T) {
-	notifications := make(chan *salmon.Notification, 8)
+	notifications := make(chan *montray.Notification, 8)
 	logPath := t.TempDir() + "/watch.log"
 	combiner, err := NewCombiner(CombinerParams{
 		Config: Config{Servers: []ConfigServer{{
@@ -238,7 +238,7 @@ func TestCombinerReportsTunnelFailureAsInternalIncident(t *testing.T) {
 			Sinks: []logs.LoggerSinkParams{{Filepath: logPath, MinLevel: logs.Info}},
 		}),
 		Clock: clock.New(),
-		OngoingIncidentsHandler: func(notification *salmon.Notification) {
+		OngoingIncidentsHandler: func(notification *montray.Notification) {
 			notifications <- notification
 		},
 	})
@@ -250,7 +250,7 @@ func TestCombinerReportsTunnelFailureAsInternalIncident(t *testing.T) {
 	select {
 	case notification := <-notifications:
 		incident := incidentWithKey(notification.OngoingIncidents.Total, "internal.tunnel.remote")
-		if incident == nil || incident.State != salmon.ItemStateError || incident.Details == "" {
+		if incident == nil || incident.State != montray.ItemStateError || incident.Details == "" {
 			t.Fatalf("notification = %#v, want tunnel failure incident", notification)
 		}
 		if incidentWithKey(notification.OngoingIncidents.Total, "internal.connection.remote") != nil {
@@ -293,13 +293,13 @@ func TestCombinerKeepsReconnectedSnapshotFreshWhenEventsAreQueued(t *testing.T) 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			clk := clock.NewMock()
-			updates := make(chan *salmon.Notification, 16)
+			updates := make(chan *montray.Notification, 16)
 			statuses := make(chan ConnectionEvent, 4)
 			combiner := &Combiner{
 				params: CombinerParams{
 					Clock:  clk,
 					Logger: logs.NewLogger(logs.LoggerParams{Clock: clk}),
-					OngoingIncidentsHandler: func(notification *salmon.Notification) {
+					OngoingIncidentsHandler: func(notification *montray.Notification) {
 						updates <- notification
 					},
 					ConnectionStatusHandler: func(_ string, event ConnectionEvent) {
@@ -307,7 +307,7 @@ func TestCombinerKeepsReconnectedSnapshotFreshWhenEventsAreQueued(t *testing.T) 
 					},
 				},
 				internalTracker: statestracker.NewItemStatesTracker(statestracker.ItemStatesTrackerParams{Clock: clk}),
-				totalByID: map[string][]*salmon.ItemWContext{
+				totalByID: map[string][]*montray.ItemWContext{
 					"remote": {combinerTestIncident("remote.disk", false)},
 				},
 				closeDone: make(chan struct{}),
@@ -321,8 +321,8 @@ func TestCombinerKeepsReconnectedSnapshotFreshWhenEventsAreQueued(t *testing.T) 
 			}
 			events <- ServerEvent{
 				Kind: ServerEventKindOngoingIncidents,
-				OngoingIncidents: &salmon.Notification{OngoingIncidents: salmon.OngoingIncidentsWDelta{
-					Total: []*salmon.ItemWContext{combinerTestIncident("disk", false)},
+				OngoingIncidents: &montray.Notification{OngoingIncidents: montray.OngoingIncidentsWDelta{
+					Total: []*montray.ItemWContext{combinerTestIncident("disk", false)},
 				}},
 			}
 

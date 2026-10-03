@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/salmon/logs"
+	"github.com/dimonomid/montray/logs"
 )
 
 const (
 	defaultTunnelRestartDelay = 5 * time.Second
 	tunnelCommandWaitDelay    = time.Second
-	sshTunnelReadySignal      = "SALMON_TUNNEL_READY"
+	sshTunnelReadySignal      = "MONTRAY_TUNNEL_READY"
 	// maxTunnelFailureOutputBytes bounds the tail of stdout or stderr retained
 	// from one tunnel process for inclusion in a failure incident.
 	maxTunnelFailureOutputBytes = 1024
@@ -423,7 +423,7 @@ func TunnelCommand(server ConfigServer) (*TunnelCommandSpec, error) {
 		"-o", "PermitLocalCommand=yes",
 		"-o", "LocalCommand=echo " + sshTunnelReadySignal,
 		"-p", strconv.Itoa(port),
-		"-L", server.Addr + ":" + ssh.RemoteSalmonAddr,
+		"-L", server.Addr + ":" + ssh.RemoteServerAddr,
 	}
 	args = append(args, ssh.ExtraSSHArgs...)
 	args = append(args, destination)

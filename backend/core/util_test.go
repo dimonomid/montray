@@ -6,13 +6,13 @@ import (
 )
 
 func TestCheckID(t *testing.T) {
-	for _, id := range []string{"salmon", "salmon-watch", "salmon_2"} {
+	for _, id := range []string{"montray", "montray-server", "montray_2"} {
 		if err := CheckID(id); err != nil {
 			t.Errorf("CheckID(%q) = %v, want nil", id, err)
 		}
 	}
 
-	for _, id := range []string{"", "2salmon", "salmon!"} {
+	for _, id := range []string{"", "2montray", "montray!"} {
 		err := CheckID(id)
 		if err == nil {
 			t.Errorf("CheckID(%q) = nil, want error", id)

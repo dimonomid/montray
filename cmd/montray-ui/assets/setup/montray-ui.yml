@@ -1,0 +1,39 @@
+wsClient:
+  servers:
+    - id: local # Arbitrary but unique ID for this server.
+      addr: localhost:41990
+
+    # SSH tunnel example. With addr omitted, Montray UI allocates an available
+    # port on 127.0.0.1, starts and supervises ssh, then connects after readiness.
+    # - id: remote
+    #   tunnel:
+    #     ssh:
+    #       host: montray.example.com
+    #       user: montray
+    #       port: 22
+    #       remoteServerAddr: 127.0.0.1:41990
+    #       extraSshArgs: ["-i", "/etc/montray/remote.key"]
+
+    # You can use a custom tunnel command instead of the SSH configuration
+    # above. The first item is the executable; the remaining items are passed
+    # directly as arguments, without a shell.
+    # - id: custom-tunnel
+    #   addr: 127.0.0.1:41993
+    #   tunnel:
+    #     customCommand:
+    #       command: ["my-tunnel", "--listen", "127.0.0.1:41993"]
+    #       # Omit readinessProbe if the command is ready immediately after it
+    #       # starts. Otherwise, WebSocket connections wait until this text
+    #       # appears in either stdout or stderr.
+    #       readinessProbe:
+    #         containsOutput: "tunnel ready"
+
+    # TLS and bearer-token example. Run `montray-ui generate-bearer-token
+    # secure` to create the token and print the corresponding server config.
+    # - id: secure
+    #   addr: montray.example.com:41990
+    #   tls:
+    #     caFile: /etc/montray/montray-ca.pem
+    #     serverName: montray.example.com
+    #   auth:
+    #     bearerTokenFile: /etc/montray/secure.token

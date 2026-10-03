@@ -15,24 +15,24 @@ type Config struct {
 }
 
 type ConfigServer struct {
-	// ID identifies this Salmon server and prefixes all incident keys received
+	// ID identifies this Montray server and prefixes all incident keys received
 	// from it. It must contain only letters, digits, underscores, or hyphens.
 	ID string `yaml:"id"`
 
-	// Addr is an address of the salmon server, in the form "host:port".
+	// Addr is an address of the montray server, in the form "host:port".
 	Addr string `yaml:"addr"`
 
 	// TLS enables a secure WebSocket connection when present.
 	TLS *ConfigTLS `yaml:"tls,omitempty"`
 
-	// Auth optionally authenticates this client to the Salmon server.
+	// Auth optionally authenticates this client to the Montray server.
 	Auth *ConfigAuth `yaml:"auth,omitempty"`
 
 	// Tunnel optionally runs a persistent local tunnel command for this server.
 	Tunnel *ConfigTunnel `yaml:"tunnel,omitempty"`
 }
 
-// ConfigAuth identifies the bearer token used to authenticate to one Salmon
+// ConfigAuth identifies the bearer token used to authenticate to one Montray
 // server.
 type ConfigAuth struct {
 	// BearerTokenFile is the path to a file containing the bearer token.
@@ -83,11 +83,45 @@ type ConfigSSHTunnel struct {
 	User string `yaml:"user"`
 	// Port is the SSH server port. It defaults to 22.
 	Port int `yaml:"port"`
-	// RemoteSalmonAddr is the address the SSH server uses to reach Salmon.
-	RemoteSalmonAddr string `yaml:"remoteSalmonAddr"`
+	// RemoteServerAddr is the address the SSH server uses to reach Montray.
+	RemoteServerAddr string `yaml:"remoteServerAddr"`
 	// ExtraSSHArgs are inserted as individual ssh arguments without shell
 	// interpretation.
 	ExtraSSHArgs []string `yaml:"extraSshArgs,omitempty"`
+}
+
+// UnmarshalYAML accepts the pre-rename remoteSalmonAddr key while emitting and
+// documenting remoteServerAddr as the canonical spelling.
+func (c *ConfigSSHTunnel) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var decoded struct {
+		Host             string   `yaml:"host"`
+		User             string   `yaml:"user"`
+		Port             int      `yaml:"port"`
+		RemoteServerAddr *string  `yaml:"remoteServerAddr"`
+		RemoteSalmonAddr *string  `yaml:"remoteSalmonAddr"`
+		ExtraSSHArgs     []string `yaml:"extraSshArgs,omitempty"`
+	}
+	if err := unmarshal(&decoded); err != nil {
+		return err
+	}
+	if decoded.RemoteServerAddr != nil && decoded.RemoteSalmonAddr != nil {
+		return fmt.Errorf("remoteServerAddr and legacy remoteSalmonAddr cannot both be set")
+	}
+
+	remoteAddr := decoded.RemoteServerAddr
+	if remoteAddr == nil {
+		remoteAddr = decoded.RemoteSalmonAddr
+	}
+	*c = ConfigSSHTunnel{
+		Host:         decoded.Host,
+		User:         decoded.User,
+		Port:         decoded.Port,
+		ExtraSSHArgs: decoded.ExtraSSHArgs,
+	}
+	if remoteAddr != nil {
+		c.RemoteServerAddr = *remoteAddr
+	}
+	return nil
 }
 
 // Validate checks server IDs and optional tunnel configurations.
@@ -118,7 +152,7 @@ func hasStructuredSSHTunnel(server ConfigServer) bool {
 	return server.Tunnel != nil && server.Tunnel.SSH != nil && server.Tunnel.CustomCommand == nil
 }
 
-// ValidateServerID checks whether an ID can identify a configured Salmon
+// ValidateServerID checks whether an ID can identify a configured Montray
 // server and safely prefix its incident keys and generated credential files.
 func ValidateServerID(id string) error {
 	if id == "" {
@@ -170,11 +204,11 @@ func validateTunnel(server ConfigServer, serverIndex int) error {
 	if ssh.Port < 0 || ssh.Port > 65535 {
 		return fmt.Errorf("%s.ssh.port must be between 1 and 65535 when set", prefix)
 	}
-	if ssh.RemoteSalmonAddr == "" {
-		return fmt.Errorf("%s.ssh.remoteSalmonAddr is required", prefix)
+	if ssh.RemoteServerAddr == "" {
+		return fmt.Errorf("%s.ssh.remoteServerAddr is required", prefix)
 	}
-	if err := validateHostPort(ssh.RemoteSalmonAddr); err != nil {
-		return fmt.Errorf("%s.ssh.remoteSalmonAddr: %w", prefix, err)
+	if err := validateHostPort(ssh.RemoteServerAddr); err != nil {
+		return fmt.Errorf("%s.ssh.remoteServerAddr: %w", prefix, err)
 	}
 	if server.Addr == "" {
 		return nil

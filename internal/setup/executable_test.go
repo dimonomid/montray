@@ -8,8 +8,8 @@ import (
 
 func TestInstallExecutablePreservesDestinationByDefault(t *testing.T) {
 	directory := t.TempDir()
-	source := filepath.Join(directory, "download", "salmon")
-	destination := filepath.Join(directory, "usr", "local", "bin", "salmon")
+	source := filepath.Join(directory, "download", "montray")
+	destination := filepath.Join(directory, "usr", "local", "bin", "montray")
 	if err := os.MkdirAll(filepath.Dir(source), 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -48,8 +48,8 @@ func TestInstallExecutablePreservesDestinationByDefault(t *testing.T) {
 
 func TestInstallExecutableReplacesDestinationDuringReinstall(t *testing.T) {
 	directory := t.TempDir()
-	source := filepath.Join(directory, "download", "salmon")
-	destination := filepath.Join(directory, "usr", "local", "bin", "salmon")
+	source := filepath.Join(directory, "download", "montray")
+	destination := filepath.Join(directory, "usr", "local", "bin", "montray")
 	if err := os.MkdirAll(filepath.Dir(source), 0755); err != nil {
 		t.Fatal(err)
 	}
