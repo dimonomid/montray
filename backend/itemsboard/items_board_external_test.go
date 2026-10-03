@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/itemsboard"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/itemsboard"
 )
 
 func TestBoardPublishesLatestSnapshot(t *testing.T) {

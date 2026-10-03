@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/v2"
 )
 
 func TestSnoozeDeadlineUsesWallClock(t *testing.T) {

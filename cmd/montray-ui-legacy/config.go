@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2/wsclient"
 	"github.com/juju/errors"
 	"gopkg.in/yaml.v2"
 )

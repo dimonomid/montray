@@ -8,9 +8,9 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray/backend/core"
-	"github.com/dimonomid/montray/internal/setup"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2/backend/core"
+	"github.com/dimonomid/montray/v2/internal/setup"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 // runMontrayServer loads the configuration and runs the monitoring core until a

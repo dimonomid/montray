@@ -7,10 +7,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/collectors"
-	execcollector "github.com/dimonomid/montray/backend/collectors/exec"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/collectors"
+	execcollector "github.com/dimonomid/montray/v2/backend/collectors/exec"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 var testLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})

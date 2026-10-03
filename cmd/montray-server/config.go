@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/dimonomid/montray/backend/core"
+	"github.com/dimonomid/montray/v2/backend/core"
 	"github.com/juju/errors"
 	"gopkg.in/yaml.v2"
 )

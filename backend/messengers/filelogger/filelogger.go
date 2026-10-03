@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/messengers"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 const timeFmt = "2006-01-02 15:04:05.000"

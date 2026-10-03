@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/statestracker"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/statestracker"
 )
 
 func TestTrackerPublishesIncidentLifecycle(t *testing.T) {

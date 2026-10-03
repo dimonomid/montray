@@ -10,9 +10,9 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/logs"
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/logs"
+	"github.com/dimonomid/montray/v2/wsclient"
 	"github.com/gorilla/websocket"
 )
 

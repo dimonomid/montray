@@ -3,7 +3,7 @@ package itemsboard
 import (
 	"sync"
 
-	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/v2"
 )
 
 type ItemsBoard struct {

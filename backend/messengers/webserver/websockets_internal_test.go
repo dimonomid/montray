@@ -12,10 +12,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/itemsboard"
-	"github.com/dimonomid/montray/backend/messengers"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/itemsboard"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	"github.com/dimonomid/montray/v2/logs"
 	"github.com/gorilla/websocket"
 )
 

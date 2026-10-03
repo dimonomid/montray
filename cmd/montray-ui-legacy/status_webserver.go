@@ -13,8 +13,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 const defPort = 41991

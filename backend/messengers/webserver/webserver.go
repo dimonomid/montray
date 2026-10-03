@@ -9,9 +9,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/messengers"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	"github.com/dimonomid/montray/v2/logs"
 
 	"github.com/juju/errors"
 	"goji.io"

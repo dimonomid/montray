@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dimonomid/montray/internal/setup"
+	"github.com/dimonomid/montray/v2/internal/setup"
 )
 
 func TestWatchSetupCreateConfigCreatesConfig(t *testing.T) {

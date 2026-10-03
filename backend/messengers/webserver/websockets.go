@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/juju/errors"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 type wsEvent string

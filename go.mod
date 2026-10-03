@@ -1,4 +1,4 @@
-module github.com/dimonomid/montray
+module github.com/dimonomid/montray/v2
 
 go 1.26.0
 

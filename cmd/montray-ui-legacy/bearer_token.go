@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2/wsclient"
 )
 
 // bearerTokenNumBytes gives generated credentials 256 bits of entropy.

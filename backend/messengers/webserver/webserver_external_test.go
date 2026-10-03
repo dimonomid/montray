@@ -16,11 +16,11 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/gorilla/websocket"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/itemsboard"
-	"github.com/dimonomid/montray/backend/messengers"
-	server "github.com/dimonomid/montray/backend/messengers/webserver"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/itemsboard"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	server "github.com/dimonomid/montray/v2/backend/messengers/webserver"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 var testLogger = logs.NewLogger(logs.LoggerParams{Clock: clock.New()})

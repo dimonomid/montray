@@ -3,7 +3,7 @@ package exec
 import (
 	"time"
 
-	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/v2"
 )
 
 type Config struct {

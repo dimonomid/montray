@@ -16,11 +16,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/itemsboard"
-	"github.com/dimonomid/montray/backend/messengers"
-	webserver "github.com/dimonomid/montray/backend/messengers/webserver"
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/itemsboard"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	webserver "github.com/dimonomid/montray/v2/backend/messengers/webserver"
+	"github.com/dimonomid/montray/v2/wsclient"
 )
 
 func TestClientReceivesIncidentsFromTLSServerWithSelfSignedCertificate(t *testing.T) {

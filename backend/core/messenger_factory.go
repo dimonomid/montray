@@ -3,12 +3,12 @@ package core
 import (
 	"fmt"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/backend/itemsboard"
-	"github.com/dimonomid/montray/backend/messengers"
-	"github.com/dimonomid/montray/backend/messengers/filelogger"
-	"github.com/dimonomid/montray/backend/messengers/webserver"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/backend/itemsboard"
+	"github.com/dimonomid/montray/v2/backend/messengers"
+	"github.com/dimonomid/montray/v2/backend/messengers/filelogger"
+	"github.com/dimonomid/montray/v2/backend/messengers/webserver"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 // messengerWCtx contains the messenger and its context (e.g. channels for that

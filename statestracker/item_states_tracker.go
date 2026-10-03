@@ -5,7 +5,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/v2"
 )
 
 type ItemStatesTracker struct {

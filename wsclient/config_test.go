@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2/wsclient"
 	"gopkg.in/yaml.v2"
 )
 

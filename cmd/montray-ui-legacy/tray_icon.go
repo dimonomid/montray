@@ -14,7 +14,7 @@ import (
 
 	"github.com/getlantern/systray"
 
-	"github.com/dimonomid/montray"
+	"github.com/dimonomid/montray/v2"
 )
 
 var (

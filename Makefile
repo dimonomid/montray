@@ -10,10 +10,10 @@ GOEXE := .exe
 endif
 
 LDFLAGS := -s -w \
-	-X 'github.com/dimonomid/montray/version.version=$(patsubst v%,%,$(VERSION))' \
-	-X 'github.com/dimonomid/montray/version.commit=$(COMMIT)' \
-	-X 'github.com/dimonomid/montray/version.date=$(DATE)' \
-	-X 'github.com/dimonomid/montray/version.builtBy=make'
+	-X 'github.com/dimonomid/montray/v2/version.version=$(patsubst v%,%,$(VERSION))' \
+	-X 'github.com/dimonomid/montray/v2/version.commit=$(COMMIT)' \
+	-X 'github.com/dimonomid/montray/v2/version.date=$(DATE)' \
+	-X 'github.com/dimonomid/montray/v2/version.builtBy=make'
 
 .PHONY: all
 all: clean montray-server montray-ui

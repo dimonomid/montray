@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/logs"
 
 	"github.com/gorilla/websocket"
 )

@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/dimonomid/montray/internal/setup"
-	"github.com/dimonomid/montray/logs"
-	"github.com/dimonomid/montray/version"
+	"github.com/dimonomid/montray/v2/internal/setup"
+	"github.com/dimonomid/montray/v2/logs"
+	"github.com/dimonomid/montray/v2/version"
 )
 
 // newRootCommand constructs the Montray command-line interface.

@@ -15,8 +15,8 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/gorilla/websocket"
 
-	"github.com/dimonomid/montray"
-	"github.com/dimonomid/montray/wsclient"
+	"github.com/dimonomid/montray/v2"
+	"github.com/dimonomid/montray/v2/wsclient"
 )
 
 type recordedNotification struct {

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dimonomid/montray/internal/setup"
+	"github.com/dimonomid/montray/v2/internal/setup"
 )
 
 const (

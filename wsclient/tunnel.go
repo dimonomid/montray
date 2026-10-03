@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 const (

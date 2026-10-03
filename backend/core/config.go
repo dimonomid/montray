@@ -1,10 +1,10 @@
 package core
 
 import (
-	"github.com/dimonomid/montray/backend/collectors/exec"
-	"github.com/dimonomid/montray/backend/collectors/systemd"
-	"github.com/dimonomid/montray/backend/messengers/filelogger"
-	"github.com/dimonomid/montray/backend/messengers/webserver"
+	"github.com/dimonomid/montray/v2/backend/collectors/exec"
+	"github.com/dimonomid/montray/v2/backend/collectors/systemd"
+	"github.com/dimonomid/montray/v2/backend/messengers/filelogger"
+	"github.com/dimonomid/montray/v2/backend/messengers/webserver"
 )
 
 type Config struct {

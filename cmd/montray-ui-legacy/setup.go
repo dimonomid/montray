@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dimonomid/montray/internal/setup"
+	"github.com/dimonomid/montray/v2/internal/setup"
 )
 
 // validateWatchSetupPlatform prevents Linux desktop-autostart setup from

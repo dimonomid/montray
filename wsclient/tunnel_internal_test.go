@@ -9,7 +9,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/dimonomid/montray/logs"
+	"github.com/dimonomid/montray/v2/logs"
 )
 
 func TestTunnelCommandBuildsSSHForward(t *testing.T) {
