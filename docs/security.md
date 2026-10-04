@@ -131,14 +131,14 @@ First, let's setup the TLS part.
 ### Setting up TLS
 
 You need a TLS certificate and its private key on the server. The user running
-`montray-server` (named `montray` by the default setup) must be able to read
+`montray-server` (named `_montray` by the default setup) must be able to read
 both files.
 
 If you don't have an existing certificate that you can use, you can create a self-signed one, like that (optionally replace `myserverforcert.com` with whatever hostname you want to use in the certificate, and also adjust the expiration `-days` as you need):
 
 ```bash
 sudo mkdir -p /etc/montray-server/tls
-sudo chown root:montray /etc/montray-server/tls
+sudo chown root:_montray /etc/montray-server/tls
 sudo chmod 0750 /etc/montray-server/tls
 
 sudo openssl req -x509 -newkey rsa:3072 -sha256 -days 3650 -nodes \
@@ -150,7 +150,7 @@ sudo openssl req -x509 -newkey rsa:3072 -sha256 -days 3650 -nodes \
   -addext "keyUsage=critical,digitalSignature,keyEncipherment" \
   -addext "extendedKeyUsage=serverAuth"
 
-sudo chown root:montray /etc/montray-server/tls/privkey.pem /etc/montray-server/tls/cert.pem
+sudo chown root:_montray /etc/montray-server/tls/privkey.pem /etc/montray-server/tls/cert.pem
 sudo chmod 0640 /etc/montray-server/tls/privkey.pem /etc/montray-server/tls/cert.pem
 ```
 

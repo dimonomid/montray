@@ -55,12 +55,26 @@ pub fn execute() -> Result<()> {
     if let CliCommand::Setup {
         operation,
         reinstall,
-    } = options.command
+        ignore_salmon,
+    } = &options.command
     {
         let config_path = options.config.clone().unwrap_or(config::default_path()?);
         let stdout = std::io::stdout();
         let mut output_stream = stdout.lock();
-        crate::setup::execute(&mut output_stream, &config_path, operation, reinstall)?;
+        crate::setup::execute(
+            &mut output_stream,
+            &config_path,
+            *operation,
+            *reinstall,
+            *ignore_salmon,
+        )?;
+        return Ok(());
+    }
+    if let CliCommand::MigrateFromSalmon { dry_run } = &options.command {
+        let config_path = options.config.clone().unwrap_or(config::default_path()?);
+        let stdout = std::io::stdout();
+        let mut output_stream = stdout.lock();
+        crate::setup::migrate_from_salmon(&mut output_stream, &config_path, *dry_run)?;
         return Ok(());
     }
     logging::init(options.log_level)?;

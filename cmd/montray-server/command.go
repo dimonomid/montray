@@ -17,6 +17,7 @@ func newRootCommand() *cobra.Command {
 	var configFilename string
 	var logLevel string
 	var reinstall bool
+	var ignoreSalmon bool
 	root := &cobra.Command{
 		Use:          "montray-server",
 		Short:        "Monitor system health and publish its status",
@@ -44,6 +45,11 @@ func newRootCommand() *cobra.Command {
 			if err := requireRootForMontrayServerSetup(cmd, "", configFilename, reinstall); err != nil {
 				return err
 			}
+			if !ignoreSalmon {
+				if err := rejectSalmonServerInstallation(defaultSalmonServerInstallation()); err != nil {
+					return err
+				}
+			}
 			if err := initializeMontrayServerConfig(cmd.OutOrStdout(), configFilename); err != nil {
 				return err
 			}
@@ -57,6 +63,23 @@ func newRootCommand() *cobra.Command {
 		},
 	}
 	setupCommand.PersistentFlags().BoolVar(&reinstall, "reinstall", false, "Replace the installed executable and systemd service")
+	setupCommand.Flags().BoolVar(&ignoreSalmon, "ignore-salmon", false, "Create a separate installation even when Salmon is installed")
+	var migrationDryRun bool
+	migrateCommand := &cobra.Command{
+		Use:   "migrate-from-salmon",
+		Short: "Migrate an existing Salmon Server installation",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !migrationDryRun {
+				invocation := setup.ShellArgument(os.Args[0]) + " setup migrate-from-salmon"
+				if err := montrayServerSetupRootError(os.Geteuid(), invocation); err != nil {
+					return err
+				}
+			}
+			return migrateMontrayServerFromSalmon(cmd.OutOrStdout(), configFilename, migrationDryRun)
+		},
+	}
+	migrateCommand.Flags().BoolVar(&migrationDryRun, "dry-run", false, "Print the migration plan without changing anything")
 	setupCommand.AddCommand(
 		&cobra.Command{
 			Use:   "create-config",
@@ -93,6 +116,7 @@ func newRootCommand() *cobra.Command {
 				return installMontrayServerService(cmd.OutOrStdout(), configFilename, reinstall)
 			},
 		},
+		migrateCommand,
 	)
 
 	root.AddCommand(setupCommand)

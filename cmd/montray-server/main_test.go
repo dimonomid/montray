@@ -64,6 +64,7 @@ func TestRunnableCommandsRejectPositionalArguments(t *testing.T) {
 		{"setup", "create-config", "unexpected"},
 		{"setup", "create-user", "unexpected"},
 		{"setup", "install-service", "unexpected"},
+		{"setup", "migrate-from-salmon", "unexpected"},
 	} {
 		command := newRootCommand()
 		command.SetArgs(args)
@@ -90,7 +91,7 @@ func TestSetupOperationsDoNotPolluteTopLevelCommands(t *testing.T) {
 	for _, subcommand := range commands[0].Commands() {
 		setupCommands[subcommand.Name()] = true
 	}
-	for _, want := range []string{"create-config", "create-user", "install-service"} {
+	for _, want := range []string{"create-config", "create-user", "install-service", "migrate-from-salmon"} {
 		if !setupCommands[want] {
 			t.Errorf("setup subcommands = %v, missing %q", setupCommands, want)
 		}
@@ -319,7 +320,7 @@ func TestMontrayServerServiceTemplateIncludesExecutableAndConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"User=montray", "Group=montray", "ExecStart=\"/usr/local/bin/montray-server\" --config \"/etc/montray-server.yml\"", "WantedBy=multi-user.target"} {
+	for _, want := range []string{"User=_montray", "Group=_montray", "ExecStart=\"/usr/local/bin/montray-server\" --config \"/etc/montray-server.yml\"", "WantedBy=multi-user.target"} {
 		if !strings.Contains(unit, want) {
 			t.Fatalf("unit %q does not contain %q", unit, want)
 		}

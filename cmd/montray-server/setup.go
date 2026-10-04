@@ -16,8 +16,8 @@ const (
 	defaultMontrayServerConfig  = "/etc/montray-server.yml"
 	legacySalmonConfig          = "/etc/salmon.yml"
 	montrayServerExecutablePath = "/usr/local/bin/montray-server"
-	montrayUserName             = "montray"
-	montrayGroupName            = "montray"
+	montrayUserName             = "_montray"
+	montrayGroupName            = "_montray"
 	montraySysusersPath         = "/usr/local/lib/sysusers.d/montray.conf"
 	montrayServerUnitPath       = "/etc/systemd/system/montray-server.service"
 )

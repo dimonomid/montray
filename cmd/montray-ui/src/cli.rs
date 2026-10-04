@@ -26,6 +26,10 @@ pub enum Command {
     Setup {
         operation: SetupOperation,
         reinstall: bool,
+        ignore_salmon: bool,
+    },
+    MigrateFromSalmon {
+        dry_run: bool,
     },
     GenerateBearerToken {
         server_id: String,
@@ -98,6 +102,10 @@ struct SetupArgs {
     #[arg(long, global = true)]
     reinstall: bool,
 
+    /// Create a separate installation even when Salmon Watch is installed.
+    #[arg(long)]
+    ignore_salmon: bool,
+
     #[command(subcommand)]
     operation: Option<SetupCommand>,
 }
@@ -111,6 +119,16 @@ enum SetupCommand {
     InstallAutostart,
     /// Install the desktop application launcher.
     InstallLauncher,
+    /// Migrate configuration and desktop integration from Salmon Watch.
+    MigrateFromSalmon(MigrationArgs),
+}
+
+/// Non-mutating controls specific to the one-way Salmon migration workflow.
+#[derive(Debug, Args)]
+struct MigrationArgs {
+    /// Print the migration plan without changing anything.
+    #[arg(long)]
+    dry_run: bool,
 }
 
 /// Arguments for secure bearer-token generation.
@@ -129,14 +147,21 @@ impl From<Cli> for Options {
     fn from(cli: Cli) -> Self {
         let command = match cli.command {
             None => Command::Run,
-            Some(CliCommand::Setup(setup)) => Command::Setup {
-                operation: match setup.operation {
-                    None => SetupOperation::Complete,
-                    Some(SetupCommand::CreateConfig) => SetupOperation::CreateConfig,
-                    Some(SetupCommand::InstallAutostart) => SetupOperation::InstallAutostart,
-                    Some(SetupCommand::InstallLauncher) => SetupOperation::InstallLauncher,
+            Some(CliCommand::Setup(setup)) => match setup.operation {
+                Some(SetupCommand::MigrateFromSalmon(migration)) => Command::MigrateFromSalmon {
+                    dry_run: migration.dry_run,
                 },
-                reinstall: setup.reinstall,
+                operation => Command::Setup {
+                    operation: match operation {
+                        None => SetupOperation::Complete,
+                        Some(SetupCommand::CreateConfig) => SetupOperation::CreateConfig,
+                        Some(SetupCommand::InstallAutostart) => SetupOperation::InstallAutostart,
+                        Some(SetupCommand::InstallLauncher) => SetupOperation::InstallLauncher,
+                        Some(SetupCommand::MigrateFromSalmon(_)) => unreachable!(),
+                    },
+                    reinstall: setup.reinstall,
+                    ignore_salmon: setup.ignore_salmon,
+                },
             },
             Some(CliCommand::GenerateBearerToken(token)) => Command::GenerateBearerToken {
                 server_id: token.server_id,
@@ -262,6 +287,7 @@ mod tests {
             Command::Setup {
                 operation: SetupOperation::Complete,
                 reinstall: false,
+                ignore_salmon: false,
             }
         );
         let options = parse([
@@ -277,6 +303,7 @@ mod tests {
             Command::Setup {
                 operation: SetupOperation::InstallAutostart,
                 reinstall: true,
+                ignore_salmon: false,
             }
         );
         assert_eq!(
@@ -290,7 +317,36 @@ mod tests {
             Command::Setup {
                 operation: SetupOperation::InstallLauncher,
                 reinstall: true,
+                ignore_salmon: false,
             }
+        );
+        assert_eq!(
+            parse(["setup".into(), "--ignore-salmon".into()])
+                .unwrap()
+                .command,
+            Command::Setup {
+                operation: SetupOperation::Complete,
+                reinstall: false,
+                ignore_salmon: true,
+            }
+        );
+        assert_eq!(
+            parse([
+                "setup".into(),
+                "migrate-from-salmon".into(),
+                "--dry-run".into(),
+            ])
+            .unwrap()
+            .command,
+            Command::MigrateFromSalmon { dry_run: true }
+        );
+        assert!(
+            parse([
+                "setup".into(),
+                "migrate-from-salmon".into(),
+                "--keep-old".into(),
+            ])
+            .is_err()
         );
     }
 
@@ -323,6 +379,7 @@ mod tests {
         assert!(setup.contains("create-config"));
         assert!(setup.contains("install-autostart"));
         assert!(setup.contains("install-launcher"));
+        assert!(setup.contains("migrate-from-salmon"));
         assert!(setup.contains("--reinstall"));
     }
 }

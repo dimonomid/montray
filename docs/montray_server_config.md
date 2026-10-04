@@ -6,10 +6,6 @@ The default config file is `/etc/montray-server.yml`. To use another one:
 $ montray-server --config /somewhere/montray-server.yml
 ```
 
-During normal startup, Montray Server falls back to the former
-`/etc/salmon.yml` path when the new default does not exist. Fresh setup always
-creates the new path.
-
 YAML is parsed strictly. An unknown key causes an error instead of being silently ignored.
 
 The top level looks like this:

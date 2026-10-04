@@ -10,8 +10,8 @@ After=network.target
 StartLimitIntervalSec=0
 
 [Service]
-User=montray
-Group=montray
+User=_montray
+Group=_montray
 ExecStart={{ systemdUnitArgument .Executable }} --config {{ systemdUnitArgument .ConfigFilename }}
 Restart=always
 RestartSec=10

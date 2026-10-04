@@ -2,9 +2,6 @@
 
 The default config file is `$XDG_CONFIG_HOME/montray-ui/montray-ui.yml`, or `~/.config/montray-ui/montray-ui.yml` when `XDG_CONFIG_HOME` isn't set.
 
-When that file does not exist, Montray UI also reads the former
-`$XDG_CONFIG_HOME/salmon-watch/salmon-watch.yml` path for compatibility.
-
 To use another one:
 
 ```
@@ -40,9 +37,7 @@ For a structured `tunnel.ssh`, `addr` may be omitted. Montray UI then asks the o
 
 Automatic port allocation applies only to the built-in, structured `tunnel.ssh` form. Direct connections require the remote server address, and `tunnel.customCommand` requires an explicit local `addr` that also appears in, or is otherwise understood by, the custom command.
 
-The SSH destination is configured as `remoteServerAddr`. Configurations from
-before the Montray rename may still use `remoteSalmonAddr`; that spelling
-remains accepted for compatibility.
+The SSH destination is configured as `remoteServerAddr`.
 
 ### Authentication
 
