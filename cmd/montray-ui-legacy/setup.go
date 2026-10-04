@@ -83,7 +83,7 @@ func renderWatchDesktopEntry(configFilename string) (string, error) {
 	if _, err := loadConfig(absoluteConfigFilename); err != nil {
 		return "", fmt.Errorf("validate config at %s: %w", absoluteConfigFilename, err)
 	}
-	executable, err := setup.ExecutablePath()
+	executable, err := setup.PersistentExecutablePath()
 	if err != nil {
 		return "", err
 	}

@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 )
 
-// ExecutablePath returns this executable's resolved path, rejecting a
-// temporary path that would not survive installation.
+// ExecutablePath returns this executable's symlink-resolved path.
 func ExecutablePath() (string, error) {
 	path, err := os.Executable()
 	if err != nil {
@@ -18,7 +17,24 @@ func ExecutablePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve executable: %w", err)
 	}
-	tempDir := filepath.Clean(os.TempDir())
+	return path, nil
+}
+
+// PersistentExecutablePath rejects locations that cannot safely be retained
+// by launchers or other installation artifacts after the current process exits.
+func PersistentExecutablePath() (string, error) {
+	path, err := ExecutablePath()
+	if err != nil {
+		return "", err
+	}
+	return requirePersistentExecutablePath(path, os.TempDir())
+}
+
+// requirePersistentExecutablePath keeps the location policy independently
+// testable from the operating-system lookup of the current executable.
+func requirePersistentExecutablePath(path, tempDir string) (string, error) {
+	path = filepath.Clean(path)
+	tempDir = filepath.Clean(tempDir)
 	if path == tempDir || len(path) > len(tempDir) && path[:len(tempDir)+1] == tempDir+string(os.PathSeparator) {
 		return "", fmt.Errorf("refusing to install from temporary executable %s", path)
 	}
