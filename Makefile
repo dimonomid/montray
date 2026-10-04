@@ -21,6 +21,7 @@ all: clean montray-server montray-ui
 .PHONY: test
 test:
 	go test --count 1 --race ./...
+	cd cmd/montray-ui-legacy && go test --count 1 --race ./...
 	node --test cmd/montray-ui-legacy/jstest/*.js
 	cargo test --manifest-path cmd/montray-ui/Cargo.toml
 
@@ -42,11 +43,11 @@ montray-server: generate
 .PHONY: montray-ui-legacy
 montray-ui-legacy: generate
 	@echo Building bin/montray-ui-legacy$(GOEXE)
-	@go build \
+	@cd cmd/montray-ui-legacy && go build \
 		-trimpath \
-		-o bin/montray-ui-legacy$(GOEXE) \
+		-o ../../bin/montray-ui-legacy$(GOEXE) \
 		-ldflags "$(LDFLAGS)" \
-		./cmd/montray-ui-legacy
+		.
 
 .PHONY: montray-ui
 montray-ui:
