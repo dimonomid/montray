@@ -1,51 +1,42 @@
-# Montray: a tray icon and desktop alerts for failing systemd services and anything else
+# Mr. Montray is watching your services
 
-Montray is a simple monitoring utility which checks the health of your local
-Linux machine and/or remote server(s), and helps you notice timely if something
-is wrong.
+Montray is a lightweight tray-icon monitoring utility for systemd services and
+anything else you can check from the command line, on both local and remote
+machines.
 
-![Montray demo](https://dmitryfrank.com/_media/projects/salmon/salmon_rust_demo.gif)
+![Montray demo](https://dmitryfrank.com/_media/projects/montray/montray_demo.gif)
 
-## Project history and naming
+## Project history
 
-I use [Syncthing](https://syncthing.net/) to sync important data across multiple
-machines. It works so well so after I've set it up, after some time I obviously
-just got used to it working all the time. And then one day I noticed that
-apparently some stuff didn't get synced. So I checked around, and found out that
-the Syncthing systemd service got broken a couple weeks ago for some reason,
-without me noticing it, and so nothing was synced during this time. That was
-really annoying: it means that the synced data on the machines that I use could
-have get diverged if I changed it on both of them, and if it's binary data, then
-merging the changes will likely be a challenge.
+I use [Syncthing](https://syncthing.net/) to sync important data across
+multiple machines. It works so well that, after setting it up, I just got used
+to it working all the time. And then one day I noticed that apparently some
+stuff didn't get synced. So I checked around, and found out that the Syncthing
+systemd service got broken a couple weeks ago for some reason, without me
+noticing it, and so nothing was synced during this time. Reconciling that data
+wasn't fun.
 
-And what's even more annoying is that an incident like a systemd service failure
-totally should have been communicated to me somehow, and yet I didn't know about
-it until I noticed a side effect of this failure.
+What's even more annoying is that an incident like a systemd service failure
+totally should have been communicated to me somehow, and yet I didn't know
+about it until I noticed side effects.
 
 It wasn't the first time when I got frustrated about the OS being too silent
 about failures like that (both locally and on the servers), and so after this
-Syncthing incident, I finally resolved to implement a utility which would help
-me notice systemd service failures, at least by showing a simple icon in tray,
-just like a green/red dot.
+Syncthing incident, I finally resolved to fix it. I didn't want some
+enterprisey monitoring for this simple task: I just wanted a simple icon,
+always present in tray: green means it's all good, blinking yellow/red means
+something's broken. That's it.
 
-So the first idea was to make it sort of "systemd monitoring". However, after a
-short while I realized that I actually want to reuse the same tray icon for
-monitoring things other than systemd services; a trivial example is to just
-check if we're not running out of disk space. Most desktop environments do
-perform this check for us, but when it comes to the servers, we're on our own;
-and it happened to me multiple times in the past that a server runs out of disk
-space and it takes a while to find that out and fix. So the next idea was, in
-addition to monitoring systemd services health, to also support running some
-arbitrary command periodically, and notify when the exit code is not what we
-want. This way, we can implement "polling" of literally anything that can be
-checked from the shell. This check is not as realtime as with systemd, since we
-probably shouldn't poll things more frequently than once per minute, but for
-things like checking disk space, it should be good enough.
-
-Anyway, the project was originally called Salmon, from "Systemd et AL
-MONitoring". It was later renamed to Montray: a shorter description of what
-the desktop application does—monitoring in the system tray—and a name that
-does not collide with the existing `salmon` package in Linux distributions.
+So the first idea was to make it a sort of "systemd monitoring". However, I
+soon realized that I actually want to reuse the same tray icon for monitoring
+other things; a trivial example is to just check if we're not running out of
+disk space. Most desktop environments do perform this check for us, but when it
+comes to the servers, we're on our own; and it happened to me more than once in
+the past that a server runs out of disk space and it takes a while to find that
+out and fix. So now Montray also supports running arbitrary command
+periodically, and alert on an unsuccessful exit code. This way, we can
+implement monitoring of literally anything that can be checked from the command
+line.
 
 ## Overview
 
@@ -168,7 +159,7 @@ your choice when a fixed local forwarding port is useful.
           host: myserver.com  # TODO: your actual server hostname
           user: myuser        # TODO: your actual ssh user
           port: 22            # Change if using non-default ssh port
-          remoteServerAddr: 127.0.0.1:41990
+          remoteServerAddr: 127.0.0.1:41990 # Montray Server listening port
 ```
 
 And restart Montray UI (`montray-ui`) by right-clicking the tray icon and
@@ -205,7 +196,7 @@ sudo systemctl restart montray-server.service
 
 ## Non-Linux OS support
 
-So far Montray UI was only tested on Linux. Nevertheless, the client
+So far Montray was only tested on Linux. Nevertheless, the client
 (`montray-ui`) should work on Windows and MacOS as well, so you can run it
 there and monitor your remote Linux servers, but not so much the local machine.
 
@@ -246,6 +237,12 @@ To build only one of them:
 ```sh
 make montray-server
 make montray-ui
+```
+
+To build a debug binary for Montray UI (for a faster build, comparing to release):
+
+```sh
+make montray-ui-debug
 ```
 
 To install built binaries under `/usr/local/bin`:
@@ -298,8 +295,8 @@ for a platform-initialization reason rather than a geometry problem.
 
 ## Screenshots
 
-![Montray OK](https://dmitryfrank.com/_media/projects/salmon/salmon_rust_screenshot_ok.png)
-![Montray Warn1](https://dmitryfrank.com/_media/projects/salmon/salmon_rust_screenshot_warn.png)
+![Montray OK](https://dmitryfrank.com/_media/projects/montray/montray_screenshot_ok.png)
+![Montray Warn1](https://dmitryfrank.com/_media/projects/montray/montray_screenshot_warn.png)
 
 ## Documentation
 
