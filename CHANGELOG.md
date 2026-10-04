@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.0.0](https://github.com/dimonomid/salmon/compare/v1.2.0...v2.0.0) (2026-10-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* migrate Go module path to /v2
+* rename project to Montray
+
+### Features
+
+* add migration from Salmon installations ([6dbf571](https://github.com/dimonomid/salmon/commit/6dbf571237ff3955d87a794c456b36589e98b39f))
+* rename project to Montray ([bb02c41](https://github.com/dimonomid/salmon/commit/bb02c416c62b606df907790d5d7b07c1b8a436d0))
+* Update app icons to heart ([3a87e56](https://github.com/dimonomid/salmon/commit/3a87e568fc062c97be1a4ba3997094cbe6dc6895))
+
+
+### Bug Fixes
+
+* allow server setup from temporary executable ([76e6a56](https://github.com/dimonomid/salmon/commit/76e6a56efa70ea4cb01f347df46e97c3a4856310))
+
+
+### Miscellaneous Chores
+
+* migrate Go module path to /v2 ([d5d6184](https://github.com/dimonomid/salmon/commit/d5d618440e6981e7cafcb521658743f626724d59))
+
 ## [1.2.0](https://github.com/dimonomid/salmon/compare/v1.1.1...v1.2.0) (2026-09-15)
 
 
