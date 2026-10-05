@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 )
 
 // LogLevel defines supported log levels.

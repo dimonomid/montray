@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 	"github.com/getlantern/systray"
 	"github.com/skratchdot/open-golang/open"
 

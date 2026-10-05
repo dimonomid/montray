@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 
 	"github.com/dimonomid/montray/v2/backend/core"
 	"github.com/dimonomid/montray/v2/internal/setup"

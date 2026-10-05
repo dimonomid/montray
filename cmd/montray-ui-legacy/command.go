@@ -3,7 +3,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 	"github.com/spf13/cobra"
 
 	"github.com/dimonomid/montray/v2/logs"

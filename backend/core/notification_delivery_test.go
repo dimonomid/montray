@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 
 	"github.com/dimonomid/montray/v2"
 	"github.com/dimonomid/montray/v2/logs"

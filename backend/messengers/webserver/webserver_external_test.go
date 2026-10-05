@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 	"github.com/gorilla/websocket"
 
 	"github.com/dimonomid/montray/v2"

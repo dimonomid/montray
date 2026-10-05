@@ -11,7 +11,7 @@ import (
 	"github.com/dimonomid/montray/v2/logs"
 	"github.com/dimonomid/montray/v2/statestracker"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 )
 
 type Core struct {

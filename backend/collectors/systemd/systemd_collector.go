@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/benbjohnson/clock"
+	"github.com/dimonomid/clock"
 	"github.com/dimonomid/montray/v2"
 	"github.com/dimonomid/montray/v2/backend/collectors"
 	"github.com/dimonomid/montray/v2/logs"
