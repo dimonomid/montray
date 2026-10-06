@@ -8,35 +8,22 @@ machines.
 
 ## Project history
 
-I use [Syncthing](https://syncthing.net/) to sync important data across
-multiple machines. It works so well that, after setting it up, I just got used
-to it working all the time. And then one day I noticed that apparently some
-stuff didn't get synced. So I checked around, and found out that the Syncthing
-systemd service got broken a couple weeks ago for some reason, without me
-noticing it, and so nothing was synced during this time. Reconciling that data
-wasn't fun.
+Problem: I don't like that Linux doesn't tell me when a systemd service breaks.
+Back in 2021 my Syncthing service had been broken for weeks, and I only figured
+that out later, after noticing that my files got badly out of sync, and it
+wasn't fun to reconcile. Systemd knew it was broken, yet it didn't tell me.
+That's not good enough.
 
-What's even more annoying is that an incident like a systemd service failure
-totally should have been communicated to me somehow, and yet I didn't know
-about it until I noticed side effects.
+I also had a certbot service silently stop working and fail to refresh
+certificates, and other similar cases.
 
-It wasn't the first time when I got frustrated about the OS being too silent
-about failures like that (both locally and on the servers), and so after this
-Syncthing incident, I finally resolved to fix it. I didn't want some
-enterprisey monitoring for this simple task: I just wanted a simple icon,
-always present in tray: green means it's all good, blinking yellow/red means
-something's broken. That's it.
+And I didn't want some enterprisey monitoring for this simple task: I just
+wanted a very lightweight app with a simple icon, always present in tray: green
+means it's all good, blinking yellow/red means something's broken. That's it.
 
-So the first idea was to make it a sort of "systemd monitoring". However, I
-soon realized that I actually want to reuse the same tray icon for monitoring
-other things; a trivial example is to just check if we're not running out of
-disk space. Most desktop environments do perform this check for us, but when it
-comes to the servers, we're on our own; and it happened to me more than once in
-the past that a server runs out of disk space and it takes a while to find that
-out and fix. So now Montray also supports running arbitrary command
-periodically, and alert on an unsuccessful exit code. This way, we can
-implement monitoring of literally anything that can be checked from the command
-line.
+Soon after, I wanted to reuse the same icon not only for systemd services, but
+also for any arbitrary command-line checks, e.g. to check that there's enough
+disk space, or that a RAID is healthy, or anything else really.
 
 ## Overview
 
