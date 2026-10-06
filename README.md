@@ -8,22 +8,25 @@ machines.
 
 ## Project history
 
-Problem: Linux doesn't tell me when a systemd service breaks. Back in 2021 my
-Syncthing service had been broken for weeks, and I only figured that out later,
-after noticing that my files got badly out of sync, and it wasn't fun to
-reconcile. Systemd knew it was broken, yet it didn't tell me. That's not good
-enough.
+Problem: Linux doesn't tell me loudly enough when a systemd service breaks.
+Back in 2021 my Syncthing service had been broken for weeks, and I only figured
+that out later, after noticing that my files got badly out of sync, and it
+wasn't fun to reconcile. Systemd knew it was broken, yet it didn't tell me.
+That's not good enough.
 
-I also had a certbot service silently stop working and fail to refresh
+I also had a Certbot service silently stop working and fail to refresh
 certificates, and other similar cases.
 
 And I didn't want some enterprisey monitoring for this simple task: I just
-wanted a very lightweight app with a simple icon, always present in tray: green
-means it's all good, blinking yellow/red means something's broken. That's it.
+wanted a simple icon, always present in the system tray: green means it's all
+good, blinking yellow/red means something's broken. That's it.
 
 Soon after, I wanted to reuse the same icon not only for systemd services, but
-also for any arbitrary command-line checks, e.g. to check that there's enough
-disk space, or that a RAID is healthy, or anything else really.
+also for arbitrary command-line checks, e.g. to check that there's enough disk
+space, or that a RAID is healthy, or anything else really.
+
+So, meet Montray: a lightweight system-tray app that watches your services,
+runs command-line checks, and lets you know when something goes wrong.
 
 ## Overview
 
