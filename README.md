@@ -8,11 +8,11 @@ machines.
 
 ## Project history
 
-Problem: I don't like that Linux doesn't tell me when a systemd service breaks.
-Back in 2021 my Syncthing service had been broken for weeks, and I only figured
-that out later, after noticing that my files got badly out of sync, and it
-wasn't fun to reconcile. Systemd knew it was broken, yet it didn't tell me.
-That's not good enough.
+Problem: Linux doesn't tell me when a systemd service breaks. Back in 2021 my
+Syncthing service had been broken for weeks, and I only figured that out later,
+after noticing that my files got badly out of sync, and it wasn't fun to
+reconcile. Systemd knew it was broken, yet it didn't tell me. That's not good
+enough.
 
 I also had a certbot service silently stop working and fail to refresh
 certificates, and other similar cases.
