@@ -93,33 +93,42 @@ The tray icon shows the worst current non-snoozed state:
 ### Monitoring local machine
 
 The easiest way to install both `montray-server` and `montray-ui` to monitor local
-machine health is as follows:
+machine health is to use prebuilt DEB or RPM packages. If neither package works
+on your Linux distribution, see the
+[standalone installation](./docs/standalone_installation.md) instead.
 
-First, download the [latest prebuilt binaries from GitHub](https://github.com/dimonomid/montray/releases/latest),
-like `montray-server-x.y.z_linux_amd64.tar.gz` and
-`montray-ui-x.y.z_linux_amd64.tar.gz`, and unpack them. You'll get two binaries:
-`montray-server` and `montray-ui`.
+First, download the
+[latest prebuilt packages from GitHub](https://github.com/dimonomid/montray/releases/latest).
 
-Then:
+For Debian and derivatives, download `montray-server_x.y.z_amd64.deb` and
+`montray-ui_x.y.z_amd64.deb`, then install them with:
 
 ```bash
-# Set up the monitoring service and start it. This also installs montray-server
-# under /usr/local/bin when not already there.
-sudo ./montray-server setup
+sudo apt install ./montray-server_x.y.z_amd64.deb ./montray-ui_x.y.z_amd64.deb
+```
 
-# Install the desktop application system-wide:
-sudo install -m 755 montray-ui /usr/local/bin/montray-ui
+For Fedora, download `montray-server-x.y.z-1.x86_64.rpm` and
+`montray-ui-x.y.z-1.x86_64.rpm`, then install them with:
 
-# Let the desktop application create its default config, autostart entry,
-# and application launcher:
-montray-ui setup
+```bash
+sudo dnf install ./montray-server-x.y.z-1.x86_64.rpm ./montray-ui-x.y.z-1.x86_64.rpm
+```
 
-# Start the desktop application (Montray Server is already running):
+After installing both packages, ensure Montray Server is enabled and running:
+
+```bash
+sudo systemctl enable --now montray-server.service
+```
+
+Then start the desktop application:
+
+```bash
 montray-ui
 ```
 
-You should now see a tray icon, and if you click on it, you'll see the UI. When
-you reboot, it will start automatically.
+You should now see a tray icon, and if you click on it, you'll see the UI. To
+start Montray UI automatically when you log in, right-click the tray icon and
+select `Enable autostart`.
 
 ### Monitoring remote machines
 
@@ -162,12 +171,10 @@ TLS and bearer token authentication. For details, see docs on
 
 ## Configuration
 
-The default config (which `sudo montray-server setup` writes to
-`/etc/montray-server.yml`) is
-as follows: if any systemd service is failing, it's a warning (the tray icon
-will be blinking yellow). If there's less than 100 MiB of free space in the
-root partition, it's an error (the tray icon will be blinking red). Otherwise,
-it's all good (the tray icon is green).
+The default config is as follows: if any systemd service is failing, it's a
+warning (the tray icon will be blinking yellow). If there's less than 100 MiB
+of free space in the root partition, it's an error (the tray icon will be
+blinking red). Otherwise, it's all good (the tray icon is green).
 
 The config includes comments and examples, so take a look and experiment with
 it; and also check the [Configuring Montray Server](./docs/montray_server_config.md)
@@ -282,6 +289,10 @@ cargo test --manifest-path cmd/montray-ui/Cargo.toml native_hide_show_preserves_
 They must run separately because Slint's GUI platform can be initialized only
 once per test process. Running both together would make the second test fail
 for a platform-initialization reason rather than a geometry problem.
+
+## Packaging
+
+For packaging instructions, see the [packaging directory](./packaging/README.md).
 
 ## Screenshots
 

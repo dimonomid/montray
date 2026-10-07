@@ -21,7 +21,7 @@ func newRootCommand() *cobra.Command {
 	root := &cobra.Command{
 		Use:          "montray-server",
 		Short:        "Monitor system health and publish its status",
-		Version:      version.FullDescription("Montray Server"),
+		Version:      version.FullDescriptionWithBuildMode("Montray Server", buildMode),
 		SilenceUsage: true,
 		Args:         cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
@@ -35,6 +35,17 @@ func newRootCommand() *cobra.Command {
 	root.SetVersionTemplate("{{.Version}}")
 	root.PersistentFlags().StringVar(&configFilename, "config", defaultMontrayServerConfig, "Config filename")
 	root.Flags().StringVar(&logLevel, "log-level", "info", "Minimum log level (debug, info, warning, or error)")
+	if packagedBuild {
+		root.AddCommand(&cobra.Command{
+			Use:                "setup",
+			Short:              "Unavailable in package manager builds",
+			DisableFlagParsing: true,
+			RunE: func(_ *cobra.Command, _ []string) error {
+				return fmt.Errorf("montray-server was installed via a package manager; in-app setup is disabled")
+			},
+		})
+		return root
+	}
 
 	setupCommand := &cobra.Command{
 		Use:   "setup",

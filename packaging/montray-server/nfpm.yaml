@@ -1,0 +1,57 @@
+name: montray-server
+arch: ${ARTIFACT_ARCH}
+platform: linux
+version: ${PACKAGE_VERSION}
+maintainer: Dmitry Frank <mail@dmitryfrank.com>
+description: |
+  Monitor system health and publish its status.
+  Montray Server runs configured health checks and publishes their status to
+  Montray UI clients.
+homepage: https://github.com/dimonomid/montray
+license: BSD-2-Clause
+section: utils
+depends:
+  - systemd
+
+contents:
+  - src: bin/montray-server
+    dst: /usr/bin/montray-server
+    file_info:
+      mode: 0755
+  - src: packaging/montray-server/montray-server.service
+    dst: /usr/lib/systemd/system/montray-server.service
+    file_info:
+      mode: 0644
+  - src: packaging/montray-server/montray-server.sysusers
+    dst: /usr/lib/sysusers.d/montray.conf
+    file_info:
+      mode: 0644
+  - src: packaging/montray-server/montray-server.yml
+    dst: /etc/montray-server.yml
+    type: config|noreplace
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/doc/montray-server/copyright
+    packager: deb
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/licenses/montray-server/LICENSE
+    packager: rpm
+    file_info:
+      mode: 0644
+
+overrides:
+  deb:
+    scripts:
+      preinstall: packaging/montray-server/warn-manual-install.sh
+      postinstall: packaging/montray-server/deb-postinstall.sh
+      preremove: packaging/montray-server/deb-preremove.sh
+      postremove: packaging/montray-server/deb-postremove.sh
+  rpm:
+    scripts:
+      preinstall: packaging/montray-server/warn-manual-install.sh
+      postinstall: packaging/montray-server/rpm-postinstall.sh
+      preremove: packaging/montray-server/rpm-preremove.sh
+      postremove: packaging/montray-server/rpm-postremove.sh

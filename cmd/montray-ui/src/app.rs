@@ -16,7 +16,7 @@ use crate::runtime::{Command, RuntimeHandle};
 use crate::tray::{FlashCycle, TrayFlashController, TrayIcons};
 use crate::ui::{MainWindow, MontrayTray, apply_snapshot};
 use crate::window_geometry::WindowGeometryManager;
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use slint::winit_030::WinitWindowAccessor;
 use slint::{CloseRequestResponse, ComponentHandle, Timer};
 
@@ -36,6 +36,14 @@ pub fn execute() -> Result<()> {
     if options.version {
         print!("{}", crate::build_info::full_description());
         return Ok(());
+    }
+    if cfg!(feature = "packaged")
+        && matches!(
+            &options.command,
+            CliCommand::Setup { .. } | CliCommand::MigrateFromSalmon { .. }
+        )
+    {
+        bail!("montray-ui was installed via a package manager; in-app setup is disabled");
     }
     if let CliCommand::GenerateBearerToken { server_id, output } = &options.command {
         let config_path = options

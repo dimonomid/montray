@@ -1,0 +1,79 @@
+core:
+
+  # Collectors check parts of the system and report incidents when their rules
+  # determine that something is unhealthy.
+  collectors:
+    - id: systemd # Arbitrary key for this collector, you can use whatever.
+      systemd:
+        unitRules:
+          # Rules are evaluated in order, so specific rules must come before
+          # the general rule at the end of this list.
+
+          # To require specific services to be active, add a rule like this:
+          # - names:
+          #     - important.service
+          #     - another-important.service
+          #   conditions:
+          #     - {state: active, result: ok}
+          #     - {result: error}
+
+          # Another example: ignore every state of a service that is known to fail.
+          - names: [something-i-dont-care-about.service]
+            conditions:
+              - {result: ok}
+
+          # Default rule for all remaining services. Ordinary lifecycle states
+          # are OK; repeated automatic restart attempts and unexpected states
+          # such as failed are warnings. The specific automatic-restart
+          # condition must come before the general lifecycle conditions.
+          - type: service
+            conditions:
+              # During an automatic restart, systemd can move a service through
+              # substates such as dead-before-auto-restart, auto-restart, and
+              # auto-restart-queued. These map to different high-level states
+              # (including inactive and activating), so matching only state or
+              # one exact substate would let parts of the same restart cycle
+              # fall through as OK. Matching the shared substring catches the
+              # whole cycle.
+              #
+              # Once this condition starts an incident, resolve requires five
+              # uninterrupted seconds in the stable states "active" or
+              # "inactive", or while the stopped unit is no longer reported
+              # by systemd. Any other state resets the wait.
+              - {
+                  subStateContains: auto-restart,
+                  result: warning,
+                  resolve: {after: 5s, states: [active, inactive, not-sent-by-systemd]}
+                }
+              - {state: active, result: ok}
+              - {state: inactive, result: ok}
+              - {state: activating, result: ok}
+              - {state: deactivating, result: ok}
+              - {state: reloading, result: ok}
+              - {state: not-sent-by-systemd, result: ok}
+              - {result: warning}
+
+    # This exec collector demonstrates checking free space on the root
+    # filesystem. Adjust the mount point and 100 MiB threshold for your host.
+    - id: root-free-space
+      exec:
+        description: Root filesystem free space
+        command:
+          - sh
+          - -c
+          - |
+            minimum_mib=100
+            available_mib="$(df -Pm / | awk 'NR == 2 { print $4 }')" || exit 1
+            if [ "$available_mib" -lt "$minimum_mib" ]; then
+              echo "only $available_mib MiB free on /; want at least $minimum_mib MiB."
+              exit 1
+            fi
+        # With no conditions, exit code 0 is OK and every other code is an error.
+
+  # Messengers publish incident updates. Multiple messengers can be used at
+  # once, for example to log changes and expose the web UI.
+  messengers:
+    - fileLogger:
+        fileName: "" # stdout (captured by systemd/journald)
+    - webserver:
+        listenAddress: "127.0.0.1:41990"

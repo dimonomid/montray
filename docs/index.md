@@ -8,4 +8,5 @@ The [README](../README.md) contains the installation and quick-start instruction
 
 - [Configuring Montray Server](./montray_server_config.md)
 - [Configuring Montray UI](./montray_ui_config.md)
+- [Standalone installation](./standalone_installation.md)
 - [Security](./security.md)

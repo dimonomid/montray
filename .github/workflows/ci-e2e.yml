@@ -7,6 +7,36 @@ permissions:
   contents: read
 
 jobs:
+  montray-packages:
+    name: montray packages E2E (Debian and Fedora)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          # 0 means full history, not zero commits. Package versions use
+          # git describe, so tags must be available.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install nFPM
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.3
+
+      - name: Build packages
+        run: |
+          mkdir -p release
+          bash util/build_linux_packages.sh montray-server release
+          MONTRAY_UI_LINUX_BUILDER=1 bash util/build_linux_packages.sh montray-ui release
+
+      - name: Run package E2E tests
+        run: bash .github/test-linux-packages-e2e.sh release
+
   montray-ui-legacy:
     name: montray-ui-legacy E2E (Linux)
     runs-on: ubuntu-latest

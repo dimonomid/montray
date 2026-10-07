@@ -1,0 +1,78 @@
+name: montray-ui
+arch: ${ARTIFACT_ARCH}
+platform: linux
+version: ${PACKAGE_VERSION}
+maintainer: Dmitry Frank <mail@dmitryfrank.com>
+description: |
+  Show Montray status in the desktop tray.
+  Montray UI connects to one or more Montray servers and shows their health
+  status in a desktop window and tray icon.
+homepage: https://github.com/dimonomid/montray
+license: BSD-2-Clause
+section: utils
+depends:
+  - libc6
+  - libgcc-s1
+  - libfontconfig1
+  - libwayland-client0
+  - libwayland-egl1
+  - libx11-6
+  - libxcb1
+  - libxext6
+  - libxfixes3
+  - libxi6
+  - libxinerama1
+  - libxrandr2
+  - libxrender1
+  - libxcursor1
+  - libxkbcommon0
+  - libxkbcommon-x11-0
+
+contents:
+  - src: bin/montray-ui
+    dst: /usr/bin/montray-ui
+    file_info:
+      mode: 0755
+  - src: packaging/montray-ui/montray-ui.desktop
+    dst: /usr/share/applications/montray-ui.desktop
+    file_info:
+      mode: 0644
+  - src: packaging/montray-ui/montray-ui.svg
+    dst: /usr/share/icons/hicolor/scalable/apps/montray-ui.svg
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/doc/montray-ui/copyright
+    packager: deb
+    file_info:
+      mode: 0644
+  - src: LICENSE
+    dst: /usr/share/licenses/montray-ui/LICENSE
+    packager: rpm
+    file_info:
+      mode: 0644
+
+overrides:
+  deb:
+    scripts:
+      preinstall: packaging/montray-ui/warn-manual-install.sh
+  rpm:
+    depends:
+      - glibc
+      - libgcc
+      - fontconfig
+      - libwayland-client
+      - libwayland-egl
+      - libX11
+      - libxcb
+      - libXext
+      - libXfixes
+      - libXi
+      - libXinerama
+      - libXrandr
+      - libXrender
+      - libXcursor
+      - libxkbcommon
+      - libxkbcommon-x11
+    scripts:
+      preinstall: packaging/montray-ui/warn-manual-install.sh

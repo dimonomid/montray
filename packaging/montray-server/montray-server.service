@@ -1,0 +1,16 @@
+[Unit]
+Description=Montray Server: system health monitor
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=_montray
+Group=_montray
+ExecStart=/usr/bin/montray-server
+Restart=always
+RestartSec=10
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

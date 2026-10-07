@@ -5,5 +5,5 @@ Comment=Show Montray status in the desktop tray
 Categories=System;Monitor;
 Icon=montray-ui
 X-Montray-Desktop-Entry-Version=2
-Exec={{EXEC}}
+Exec=/usr/bin/montray-ui
 Terminal=false

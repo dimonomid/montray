@@ -4,6 +4,10 @@ version = "1.1.0"
 edition = "2024"
 build = "build.rs"
 
+[features]
+# Disable in-app setup when the OS package manages installed files.
+packaged = []
+
 [dependencies]
 anyhow = "1"
 base64 = "0.22"

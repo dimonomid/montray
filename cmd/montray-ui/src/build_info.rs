@@ -7,6 +7,11 @@ pub fn full_description() -> String {
         env!("MONTRAY_BUILD_COMMIT"),
         env!("MONTRAY_BUILD_DATE"),
         env!("MONTRAY_BUILT_BY"),
+        if cfg!(feature = "packaged") {
+            "for packaging"
+        } else {
+            "standalone"
+        },
         env!("MONTRAY_BUILD_TARGET"),
     )
 }
@@ -17,13 +22,14 @@ fn format_description(
     commit: &str,
     date: &str,
     built_by: &str,
+    build_mode: &str,
     target: &str,
 ) -> String {
     format!(
         r#"Montray UI {version}
 Commit: {commit}
 Build time: {date}
-Built by: {built_by}
+Built by: {built_by} ({build_mode})
 Target: {target}
 
 Written by Dmitry Frank (https://dmitryfrank.com)
@@ -43,16 +49,30 @@ mod tests {
                 "0123456789abcdef",
                 "2026-09-12T10:20:30Z",
                 "make",
+                "standalone",
                 "x86_64-unknown-linux-gnu",
             ),
             r#"Montray UI 2.0.0
 Commit: 0123456789abcdef
 Build time: 2026-09-12T10:20:30Z
-Built by: make
+Built by: make (standalone)
 Target: x86_64-unknown-linux-gnu
 
 Written by Dmitry Frank (https://dmitryfrank.com)
 "#
+        );
+    }
+
+    #[test]
+    fn compiled_description_contains_build_mode() {
+        let mode = if cfg!(feature = "packaged") {
+            "for packaging"
+        } else {
+            "standalone"
+        };
+        assert!(
+            full_description()
+                .contains(&format!("Built by: {} ({mode})", env!("MONTRAY_BUILT_BY")))
         );
     }
 }

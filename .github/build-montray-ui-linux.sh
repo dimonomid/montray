@@ -12,5 +12,6 @@ builder_image="montray-ui-ubuntu-20.04-builder"
   .github/montray-ui-linux-builder
 "${container_runtime}" run \
   --rm \
+  --env MONTRAY_BUILD_PACKAGED="${MONTRAY_BUILD_PACKAGED:-}" \
   --volume "${PWD}:/workspace" \
   "${builder_image}"

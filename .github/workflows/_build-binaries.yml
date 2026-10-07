@@ -52,6 +52,18 @@ jobs:
         run: |
           mkdir release
           tar -czf "release/montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" -C bin montray-server
+          cp bin/montray-server /tmp/montray-server-archive-binary
+
+      - name: Install nFPM
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.3
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Package montray-server for package managers
+        env:
+          PACKAGE_VERSION: ${{ env.ARTIFACT_VERSION }}
+        run: |
+          bash util/build_linux_packages.sh montray-server release
 
       - name: Install Syft
         uses: anchore/sbom-action/download-syft@v0.24.2
@@ -65,8 +77,16 @@ jobs:
         run: |
           bash util/prepare_release_artifact.sh \
             "release/montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}.tar.gz" \
-            bin/montray-server \
+            /tmp/montray-server-archive-binary \
             "montray-server-${ARTIFACT_VERSION}_linux_${ARTIFACT_ARCH}"
+          for package in release/*.deb release/*.rpm; do
+            [[ -e "$package" ]] || continue
+            package_name="$(basename "$package")"
+            bash util/prepare_release_artifact.sh \
+              "$package" \
+              "$package" \
+              "${package_name%.*}"
+          done
 
       - name: Upload intermediary montray-server artifacts
         uses: actions/upload-artifact@v6
@@ -217,6 +237,13 @@ jobs:
           echo "ARTIFACT_VERSION=${version#v}" >> "$GITHUB_ENV"
           echo "ARTIFACT_ARCH=$arch" >> "$GITHUB_ENV"
 
+      - name: Set up Go for nFPM
+        if: matrix.os == 'linux'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
       - name: Build montray-ui
         if: matrix.os != 'linux'
         shell: bash
@@ -232,6 +259,23 @@ jobs:
         run: |
           mkdir release
           tar -czf "release/montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz" -C bin montray-ui
+          if [[ "${{ matrix.os }}" == "linux" ]]; then
+            cp bin/montray-ui /tmp/montray-ui-archive-binary
+          fi
+
+      - name: Install nFPM
+        if: matrix.os == 'linux'
+        run: |
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.3
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Package montray-ui for package managers
+        if: matrix.os == 'linux'
+        env:
+          PACKAGE_VERSION: ${{ env.ARTIFACT_VERSION }}
+          MONTRAY_UI_LINUX_BUILDER: 1
+        run: |
+          bash util/build_linux_packages.sh montray-ui release
 
       - name: Package Windows binary
         if: matrix.os == 'windows'
@@ -258,9 +302,22 @@ jobs:
           else
             archive="release/montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}.tar.gz"
             binary="bin/montray-ui"
+            if [[ "${{ matrix.os }}" == "linux" ]]; then
+              binary="/tmp/montray-ui-archive-binary"
+            fi
             signature_basename="montray-ui-${ARTIFACT_VERSION}_${{ matrix.artifact_os }}_${ARTIFACT_ARCH}"
           fi
           bash util/prepare_release_artifact.sh "$archive" "$binary" "$signature_basename"
+          if [[ "${{ matrix.os }}" == "linux" ]]; then
+            for package in release/*.deb release/*.rpm; do
+              [[ -e "$package" ]] || continue
+              package_name="$(basename "$package")"
+              bash util/prepare_release_artifact.sh \
+                "$package" \
+                "$package" \
+                "${package_name%.*}"
+            done
+          fi
 
       - name: Upload intermediary montray-ui artifacts
         uses: actions/upload-artifact@v6
@@ -305,6 +362,9 @@ jobs:
             find release -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Test Linux packages
+        run: bash .github/test-linux-packages.sh release
 
       - name: Upload combined release artifacts
         uses: actions/upload-artifact@v6

@@ -64,9 +64,11 @@ func loadRuntimeConfigWithFallback(configFilename, legacyFilename string, allowL
 	return nil, configFilename, err
 }
 
-// montrayServerConfigReadError adds setup guidance when the default configuration is
-// missing.
+// montrayServerConfigReadError adds setup help to standalone builds.
 func montrayServerConfigReadError(configFilename string, err error) error {
+	if packagedBuild {
+		return fmt.Errorf("failed to read config from %s: %w", configFilename, err)
+	}
 	if configNotFound(err) && configFilename == defaultMontrayServerConfig {
 		executable := setup.ShellArgument(os.Args[0])
 		return fmt.Errorf("failed to read config from %s: %w\n\nHint: Run the following command to create the default configuration, install the service, and start it:\n\n    sudo %s setup\n\nTo create only the default configuration without installing the service, run:\n\n    sudo %s setup create-config\n", configFilename, err, executable, executable)

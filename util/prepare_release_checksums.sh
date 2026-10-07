@@ -11,7 +11,7 @@ release_dir="$1"
 
 cd "$release_dir"
 shopt -s nullglob
-artifacts=( *.tar.gz *.zip *.sbom.json )
+artifacts=( *.tar.gz *.zip *.deb *.rpm *.sbom.json )
 
 if [[ "${#artifacts[@]}" -eq 0 ]]; then
   echo "no release archives or SBOMs found in $release_dir" >&2

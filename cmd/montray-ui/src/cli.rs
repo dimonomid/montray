@@ -90,6 +90,10 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum CliCommand {
     /// Create configuration and install the desktop integration.
+    #[cfg_attr(
+        feature = "packaged",
+        command(about = "Unavailable in package manager builds")
+    )]
     Setup(SetupArgs),
     /// Generate a bearer token for one Montray Server.
     GenerateBearerToken(GenerateBearerTokenArgs),
@@ -97,21 +101,30 @@ enum CliCommand {
 
 /// Arguments shared by complete and targeted setup runs.
 #[derive(Debug, Args)]
+#[cfg_attr(feature = "packaged", command(disable_help_flag = true))]
 struct SetupArgs {
     /// Privately back up and replace existing desktop integration files.
+    #[cfg(not(feature = "packaged"))]
     #[arg(long, global = true)]
     reinstall: bool,
 
     /// Create a separate installation even when Salmon Watch is installed.
+    #[cfg(not(feature = "packaged"))]
     #[arg(long)]
     ignore_salmon: bool,
 
+    #[cfg(not(feature = "packaged"))]
     #[command(subcommand)]
     operation: Option<SetupCommand>,
+
+    #[cfg(feature = "packaged")]
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    ignored: Vec<OsString>,
 }
 
 /// Optional restriction to one part of setup.
 #[derive(Debug, Subcommand)]
+#[cfg(not(feature = "packaged"))]
 enum SetupCommand {
     /// Create the default configuration if it does not exist.
     CreateConfig,
@@ -125,6 +138,7 @@ enum SetupCommand {
 
 /// Non-mutating controls specific to the one-way Salmon migration workflow.
 #[derive(Debug, Args)]
+#[cfg(not(feature = "packaged"))]
 struct MigrationArgs {
     /// Print the migration plan without changing anything.
     #[arg(long)]
@@ -147,22 +161,7 @@ impl From<Cli> for Options {
     fn from(cli: Cli) -> Self {
         let command = match cli.command {
             None => Command::Run,
-            Some(CliCommand::Setup(setup)) => match setup.operation {
-                Some(SetupCommand::MigrateFromSalmon(migration)) => Command::MigrateFromSalmon {
-                    dry_run: migration.dry_run,
-                },
-                operation => Command::Setup {
-                    operation: match operation {
-                        None => SetupOperation::Complete,
-                        Some(SetupCommand::CreateConfig) => SetupOperation::CreateConfig,
-                        Some(SetupCommand::InstallAutostart) => SetupOperation::InstallAutostart,
-                        Some(SetupCommand::InstallLauncher) => SetupOperation::InstallLauncher,
-                        Some(SetupCommand::MigrateFromSalmon(_)) => unreachable!(),
-                    },
-                    reinstall: setup.reinstall,
-                    ignore_salmon: setup.ignore_salmon,
-                },
-            },
+            Some(CliCommand::Setup(setup)) => setup_command(setup),
             Some(CliCommand::GenerateBearerToken(token)) => Command::GenerateBearerToken {
                 server_id: token.server_id,
                 output: token.output,
@@ -177,6 +176,36 @@ impl From<Cli> for Options {
             command,
             version: cli.version,
         }
+    }
+}
+
+#[cfg(feature = "packaged")]
+fn setup_command(setup: SetupArgs) -> Command {
+    let _ = setup.ignored;
+    Command::Setup {
+        operation: SetupOperation::Complete,
+        reinstall: false,
+        ignore_salmon: false,
+    }
+}
+
+#[cfg(not(feature = "packaged"))]
+fn setup_command(setup: SetupArgs) -> Command {
+    match setup.operation {
+        Some(SetupCommand::MigrateFromSalmon(migration)) => Command::MigrateFromSalmon {
+            dry_run: migration.dry_run,
+        },
+        operation => Command::Setup {
+            operation: match operation {
+                None => SetupOperation::Complete,
+                Some(SetupCommand::CreateConfig) => SetupOperation::CreateConfig,
+                Some(SetupCommand::InstallAutostart) => SetupOperation::InstallAutostart,
+                Some(SetupCommand::InstallLauncher) => SetupOperation::InstallLauncher,
+                Some(SetupCommand::MigrateFromSalmon(_)) => unreachable!(),
+            },
+            reinstall: setup.reinstall,
+            ignore_salmon: setup.ignore_salmon,
+        },
     }
 }
 
@@ -208,6 +237,7 @@ fn parse_scale(value: &str) -> Result<f32, String> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(not(feature = "packaged"))]
     use clap::error::ErrorKind;
 
     use super::*;
@@ -281,6 +311,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "packaged"))]
     fn parses_setup_commands_and_reinstall_in_any_position() {
         assert_eq!(
             parse(["setup".into()]).unwrap().command,
@@ -351,6 +382,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "packaged"))]
     fn rejects_unknown_or_multiple_setup_operations() {
         assert!(parse(["setup".into(), "unexpected".into()]).is_err());
         assert!(
@@ -364,6 +396,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "packaged"))]
     fn clap_generates_root_and_subcommand_help() {
         let root = parse(["--help".into()]).unwrap_err();
         assert_eq!(root.kind(), ErrorKind::DisplayHelp);
