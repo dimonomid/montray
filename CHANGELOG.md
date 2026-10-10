@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.0](https://github.com/dimonomid/montray/compare/v2.0.0...v2.1.0) (2026-10-10)
+
+
+### Features
+
+* Add autostart control to tray menu ([21403e3](https://github.com/dimonomid/montray/commit/21403e3da9aed854165a198767f477120100d350))
+* Add prebuilt Debian and RPM packages ([f5e2fdc](https://github.com/dimonomid/montray/commit/f5e2fdc1aa184451ebff57639bca0e411ca1b285))
+* Add tray menuitem Edit configuration ([3264112](https://github.com/dimonomid/montray/commit/3264112576bdb9407c80bfa124e2eeaa82bb8f7e))
+* Create montray-ui default config on the first run ([b33159d](https://github.com/dimonomid/montray/commit/b33159debc83b7f33c487fdf95bb4535cfe928bc))
+
 ## [2.0.0](https://github.com/dimonomid/salmon/compare/v1.2.0...v2.0.0) (2026-10-04)
 
 
