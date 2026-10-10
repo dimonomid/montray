@@ -16,7 +16,7 @@ use crate::runtime::{Command, RuntimeHandle};
 use crate::tray::{FlashCycle, TrayFlashController, TrayIcons};
 use crate::ui::{MainWindow, MontrayTray, apply_snapshot};
 use crate::window_geometry::WindowGeometryManager;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use slint::winit_030::WinitWindowAccessor;
 use slint::{CloseRequestResponse, ComponentHandle, Timer};
 
@@ -186,26 +186,19 @@ fn run(start_hidden: bool, config_path: PathBuf, automatic_scale: bool) -> Resul
     })
 }
 
-/// Loads the startup configuration, suggesting complete setup when the default file is absent.
+/// Loads the startup configuration, creating the per-user default when absent.
 fn load_startup_config(path: &Path) -> Result<Config> {
-    Config::load(path).map_err(|error| {
-        let missing = error.chain().any(|cause| {
-            cause
-                .downcast_ref::<std::io::Error>()
-                .is_some_and(|error| error.kind() == std::io::ErrorKind::NotFound)
-        });
-        if !missing || config::default_path().ok().as_deref() != Some(path) {
-            return error;
-        }
+    if config_is_missing(path)
+        && crate::setup::create_default_config(path)
+            .with_context(|| format!("create default configuration at {}", path.display()))?
+    {
+        log::info!("created default configuration at {}", path.display());
+    }
+    Config::load(path)
+}
 
-        let executable = std::env::args_os()
-            .next()
-            .unwrap_or_else(|| OsString::from("montray-ui"));
-        let executable = crate::setup::shell_argument(&executable.to_string_lossy());
-        anyhow!(
-            "{error:#}\n\nHint: Run the following command to create the default configuration, desktop-autostart entry, and application launcher:\n\n    {executable} setup\n\nTo create only the default configuration without installing the desktop integration, run:\n\n    {executable} setup create-config"
-        )
-    })
+fn config_is_missing(path: &Path) -> bool {
+    std::fs::metadata(path).is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound)
 }
 
 /// Logs backend-selected scale after Winit has attached a real monitor.

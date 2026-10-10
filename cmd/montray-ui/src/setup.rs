@@ -14,6 +14,12 @@ const DESKTOP_ENTRY_TEMPLATE: &str = include_str!("../assets/setup/montray-ui.de
 const DESKTOP_EXEC_PLACEHOLDER: &str = "{{EXEC}}";
 const DESKTOP_ENTRY_VERSION_KEY: &str = "X-Montray-Desktop-Entry-Version";
 
+/// Creates the default user configuration when absent without replacing an
+/// existing file. The result reports whether this call created it.
+pub(crate) fn create_default_config(config_filename: &Path) -> Result<bool> {
+    Ok(install_file(config_filename, DEFAULT_CONFIG, false)? == FileResult::Created)
+}
+
 /// Concrete XDG destinations, grouped so tests can redirect setup into a sandbox.
 #[derive(Clone, Debug)]
 struct InstallPaths {
