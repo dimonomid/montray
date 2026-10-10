@@ -411,6 +411,22 @@ fn install_tray_callbacks(
         }
     });
 
+    let notifications_for_edit = notifications.clone();
+    let config_path_for_edit = config_path.clone();
+    tray.on_edit_configuration(move || {
+        if let Err(error) = open::that(&config_path_for_edit) {
+            log::error!("failed to open configuration: {error}");
+            if let Err(notification_error) = notifications_for_edit.push(
+                "Could not open configuration",
+                &format!("{}: {error}", config_path_for_edit.display()),
+            ) {
+                log::error!(
+                    "failed to show configuration open error notification: {notification_error:#}"
+                );
+            }
+        }
+    });
+
     let restart_requested_from_tray = restart_requested.clone();
     let geometry_for_restart = geometry.clone();
     let window_weak = window.as_weak();

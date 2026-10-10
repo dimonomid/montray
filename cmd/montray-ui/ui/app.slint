@@ -513,6 +513,7 @@ export component MontrayTray inherits SystemTrayIcon {
     callback open-window();
     callback example-notification();
     callback toggle-autostart();
+    callback edit-configuration();
     callback restart();
     callback exit();
 
@@ -534,6 +535,10 @@ export component MontrayTray inherits SystemTrayIcon {
         if root.autostart-supported: MenuItem {
             title: root.autostart-enabled ? "Disable autostart" : "Enable autostart";
             activated => { root.toggle-autostart(); }
+        }
+        MenuItem {
+            title: "Edit configuration";
+            activated => { root.edit-configuration(); }
         }
         MenuItem {
             title: "Restart and reload configuration";
