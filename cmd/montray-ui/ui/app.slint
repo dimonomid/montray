@@ -507,9 +507,12 @@ export component MontrayTray inherits SystemTrayIcon {
     // the first runtime snapshot and replace it with the current status icon.
     in property <image> tray-icon: @image-url("../assets/tray/gray.png");
     in property <string> status-title;
+    in property <bool> autostart-supported;
+    in property <bool> autostart-enabled;
     callback toggle-window();
     callback open-window();
     callback example-notification();
+    callback toggle-autostart();
     callback restart();
     callback exit();
 
@@ -528,6 +531,10 @@ export component MontrayTray inherits SystemTrayIcon {
             activated => { root.example-notification(); }
         }
         MenuSeparator { }
+        if root.autostart-supported: MenuItem {
+            title: root.autostart-enabled ? "Disable autostart" : "Enable autostart";
+            activated => { root.toggle-autostart(); }
+        }
         MenuItem {
             title: "Restart and reload configuration";
             activated => { root.restart(); }

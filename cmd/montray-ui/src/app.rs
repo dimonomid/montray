@@ -115,6 +115,14 @@ fn run(start_hidden: bool, config_path: PathBuf, automatic_scale: bool) -> Resul
     let window = MainWindow::new().context("failed to create native window")?;
     install_scale_logging(&window, automatic_scale);
     let tray = MontrayTray::new().context("failed to create system tray icon")?;
+    let autostart_supported = cfg!(target_os = "linux");
+    tray.set_autostart_supported(autostart_supported);
+    if autostart_supported {
+        match crate::setup::autostart_enabled() {
+            Ok(enabled) => tray.set_autostart_enabled(enabled),
+            Err(error) => log::error!("failed to read autostart state: {error:#}"),
+        }
+    }
     log::info!("UI and system tray initialized");
     let geometry = WindowGeometryManager::new(store.clone(), persisted.preferences.window_geometry);
 
@@ -374,6 +382,32 @@ fn install_tray_callbacks(
             "Montray UI desktop notifications are working.",
         ) {
             log::error!("failed to show example notification: {error:#}");
+        }
+    });
+
+    let tray_weak = tray.as_weak();
+    let notifications_for_autostart = notifications.clone();
+    let config_path_for_autostart = config_path.clone();
+    tray.on_toggle_autostart(move || {
+        let Some(tray) = tray_weak.upgrade() else {
+            return;
+        };
+        let enable = !tray.get_autostart_enabled();
+        match crate::setup::set_autostart(&config_path_for_autostart, enable) {
+            Ok(enabled) => {
+                tray.set_autostart_enabled(enabled);
+                log::info!("autostart {}", if enabled { "enabled" } else { "disabled" });
+            }
+            Err(error) => {
+                log::error!("failed to change autostart: {error:#}");
+                if let Err(notification_error) = notifications_for_autostart
+                    .push("Autostart change failed", &format!("{error:#}"))
+                {
+                    log::error!(
+                        "failed to show autostart error notification: {notification_error:#}"
+                    );
+                }
+            }
         }
     });
 

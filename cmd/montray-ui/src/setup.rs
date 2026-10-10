@@ -20,6 +20,63 @@ pub(crate) fn create_default_config(config_filename: &Path) -> Result<bool> {
     Ok(install_file(config_filename, DEFAULT_CONFIG, false)? == FileResult::Created)
 }
 
+pub(crate) fn autostart_enabled() -> Result<bool> {
+    let config_home = dirs::config_dir().context("determine user configuration directory")?;
+    autostart_enabled_at(&config_home.join("autostart/montray-ui.desktop"))
+}
+
+pub(crate) fn set_autostart(config_filename: &Path, enabled: bool) -> Result<bool> {
+    validate_platform(std::env::consts::OS)?;
+    let config_home = dirs::config_dir().context("determine user configuration directory")?;
+    let path = config_home.join("autostart/montray-ui.desktop");
+    if !enabled {
+        return set_autostart_file(&path, "", false);
+    }
+
+    let executable = executable_path()?;
+    let config_filename = std::path::absolute(config_filename).context("resolve config path")?;
+    let entry = desktop_entry(&executable, &config_filename, true)?;
+    set_autostart_file(&path, &entry, true)
+}
+
+fn autostart_enabled_at(path: &Path) -> Result<bool> {
+    match fs::symlink_metadata(path) {
+        Ok(_) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(error).with_context(|| format!("inspect {}", path.display())),
+    }
+}
+
+fn set_autostart_file(path: &Path, entry: &str, enabled: bool) -> Result<bool> {
+    if enabled {
+        install_file(path, entry.as_bytes(), false)?;
+        return Ok(true);
+    }
+
+    let contents = match fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => {
+            return Err(error).with_context(|| format!("read {}", path.display()));
+        }
+    };
+    if !has_desktop_entry_version(&contents) && !is_legacy_desktop_entry(&contents) {
+        bail!(
+            "autostart file {} was not created by Montray; leaving it unchanged",
+            path.display()
+        );
+    }
+    fs::remove_file(path).with_context(|| format!("remove {}", path.display()))?;
+    Ok(false)
+}
+
+fn has_desktop_entry_version(contents: &str) -> bool {
+    contents.lines().any(|line| {
+        line.split_once('=')
+            .is_some_and(|(key, _)| key.trim() == DESKTOP_ENTRY_VERSION_KEY)
+    })
+}
+
 /// Concrete XDG destinations, grouped so tests can redirect setup into a sandbox.
 #[derive(Clone, Debug)]
 struct InstallPaths {
@@ -1372,6 +1429,31 @@ mod tests {
         layout.run(SetupOperation::InstallLauncher, false);
         assert!(layout.paths.launcher.exists());
         assert!(layout.paths.icon.exists());
+    }
+
+    #[test]
+    fn autostart_can_be_enabled_and_disabled() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("autostart/montray-ui.desktop");
+        let entry = "[Desktop Entry]\nName=Montray\nX-Montray-Desktop-Entry-Version=99\nExec=montray-ui --start-hidden\n";
+
+        assert!(!autostart_enabled_at(&path).unwrap());
+        assert!(set_autostart_file(&path, entry, true).unwrap());
+        assert!(autostart_enabled_at(&path).unwrap());
+        assert_eq!(fs::read_to_string(&path).unwrap(), entry);
+        assert!(!set_autostart_file(&path, "", false).unwrap());
+        assert!(!autostart_enabled_at(&path).unwrap());
+    }
+
+    #[test]
+    fn disabling_autostart_preserves_unknown_file() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("montray-ui.desktop");
+        fs::write(&path, "custom").unwrap();
+
+        let error = set_autostart_file(&path, "", false).unwrap_err();
+        assert!(error.to_string().contains("was not created by Montray"));
+        assert_eq!(fs::read_to_string(path).unwrap(), "custom");
     }
 
     #[test]
